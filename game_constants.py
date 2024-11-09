@@ -24,11 +24,13 @@ BYSTANDER_ROLE = "bystander"
 MAFIA_WINS_MESSAGE = "Mafia wins!"
 BYSTANDERS_WIN_MESSAGE = "Bystanders win!"
 GAME_MANAGER_NAME = "Game-Manager"
-RULES_OF_THE_GAME = "You are playing the game of Mafia. In this game each player is assigned a " \
-                    "role secretly, either mafia or bystander. Every round a player is " \
-                    "eliminated by the mafia during Nighttime, then during Daytime all remaining " \
-                    "players discuss together who they think the mafia players are and vote out " \
-                    "another player. The mafia's goal is to outnumber the bystanders, and the " \
+RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, either mafia or " \
+                    "bystander. Every round starts with Nighttime phase, where only mafia " \
+                    "players interact and vote to decide which bystander player they want to " \
+                    "eliminate (bystanders aren't exposed to the mafia identities or " \
+                    "interaction). Then it moves to Daytime phase, where all remaining players " \
+                    "discuss together who they think the mafia players are and vote out another " \
+                    "player. The mafia's goal is to outnumber the bystanders, and the " \
                     "bystanders' goal it to vote out all real mafia."
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
@@ -49,6 +51,8 @@ LLM_VOTE_KEYWORD = "VOTE"
 LLM_VOTING_PATTERN = rf"{LLM_VOTE_KEYWORD} (\w[ \w]*)"  # at least one letter and before spaces
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
 DEFAULT_USE_TURN_TOKEN = "<speak>"
+GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
+                      f"The rules of the game: {RULES_OF_THE_GAME}"
 
 
 def format_message(name, message):

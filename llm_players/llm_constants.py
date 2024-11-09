@@ -11,4 +11,4 @@ NUM_BEAMS = 4  # TODO modify and don't forget to use
 TEXT_GENERATION_TASK = "text-generation"
 TASK2OUTPUT_FORMAT = {TEXT_GENERATION_TASK: "generated_text"}
 # text constants:
-INITIAL_GENERATION_PROMPT = ""  # TODO !!!
+INITIAL_GENERATION_PROMPT = "Do you understand the rules?"  # TODO validate if it affects...

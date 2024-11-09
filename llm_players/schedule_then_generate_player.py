@@ -23,8 +23,17 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         else:
             return None
 
-    def create_context_for_scheduler(self, potential_answer):
-        pass  # TODO!!!
+    def create_context_for_scheduler(self, message_history):
+        task = f"Do you want to speak now and add to the discussion, " \
+               f"or do you prefer to wait for now and see what others will say? " \
+               f"Remember to choose to speak only if your contribution to the discussion " \
+               f"in the current time will be meaningful enough - don't overflow the discussion " \
+               f"with your messages! Pay attention to the amount of messages with your name " \
+               f"compared to the amount of messages with names of other players " \
+               f"and let them have their turn too! " \
+               f"Reply only {self.use_turn_token} or {self.pass_turn_token} " \
+               f"based on your decision!"
+        return self._create_prompt_skeleton(experiment_scenario, chat_list, task)
 
     def create_generation_prompt(self, message_history):
         pass  # TODO!!!
