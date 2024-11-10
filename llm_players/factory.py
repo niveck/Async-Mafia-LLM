@@ -2,13 +2,12 @@ from llm_players.fine_tuned_player import FineTunedPlayer
 from llm_players.generate_then_schedule_player import GenerateThenSchedulePlayer
 from llm_players.schedule_then_generate_player import ScheduleThenGeneratePlayer
 
-DEFAULT_ASYNC_TYPE = ""  # TODO put here the TYPE_NAME attribute of the wanted class
+DEFAULT_ASYNC_TYPE = ScheduleThenGeneratePlayer.TYPE_NAME
 
 llm_players_classes = {
     FineTunedPlayer.TYPE_NAME: FineTunedPlayer,
     ScheduleThenGeneratePlayer.TYPE_NAME: ScheduleThenGeneratePlayer,
     GenerateThenSchedulePlayer.TYPE_NAME: GenerateThenSchedulePlayer,
-    # TODO dict of TYPE_NAME to class
 }
 
 

@@ -3,7 +3,6 @@ import os
 import sys
 import time  # already in constants...
 from pathlib import Path
-from persons.asynchronous_persons.mafia_players.llm_mafia import LLMMafia
 from game_constants import *
 
 
@@ -67,6 +66,7 @@ def init_game():
     (game_dir / PUBLIC_DAYTIME_CHAT_FILE).touch()
     (game_dir / PUBLIC_NIGHTTIME_CHAT_FILE).touch()
     (game_dir / WHO_WINS_FILE).touch()
+    (game_dir / GAME_START_TIME_FILE).touch()
     return players
 
 
@@ -167,7 +167,8 @@ def wait_for_players(players):
     # TODO: this is only temporary,
     #  maybe use something automatic, like all players need to sign up in their files...
     input("As game manager, use Enter to start the game after all players have entered: ")
-    print("Game is now running! It's content is displayed to players.")
+    (game_dir / GAME_START_TIME_FILE).write_text(get_current_timestamp())
+    print("Game is now running! Its content is displayed to players.")
 
 
 def end_game():

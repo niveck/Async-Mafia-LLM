@@ -25,15 +25,16 @@ def get_llm_player():
     config_path, player_name = sys.argv[1], sys.argv[2]
     with open(config_path) as f:
         config = json.load(f)
-    player = None
-    for player_config in config["players"]:
-        if player_config["name"].lower() == player_name:
-            player = player_config
+    player_config = None
+    for player in config["players"]:
+        if player["name"].lower() == player_name:
+            player_config = player
             break
-    if player is None:
+    if player_config is None:
         raise ValueError(f"Wrong input: '{player_name}' is not a name in the game "
                          f"configured in {config_path}")
-    return llm_player_factory(player)
+    player_config["game_dir"] = game_dir
+    return llm_player_factory(player_config)
 
 
 def read_messages_from_file(message_history, file_name, num_read_lines):

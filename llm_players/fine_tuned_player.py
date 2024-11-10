@@ -7,13 +7,13 @@ class FineTunedPlayer(LLMPlayer):
 
     TYPE_NAME = "fine_tuned"
 
-    def __init__(self, name, is_mafia, **kwargs):
+    def __init__(self, name, is_mafia, game_dir, **kwargs):
         model_name = kwargs.get("model_name", DEFAULT_MODEL_PATH)
         kwargs["model_name"] = model_name  # setting the default model path for fine-tuned player
-        super().__init__(name, is_mafia, **kwargs)
+        super().__init__(name, is_mafia, game_dir, **kwargs)
 
     def create_prompt(self, message_history):
-        pass  # TODO implement! involves pre processing of the messages!
+        raise NotImplementedError()  # TODO implement! involves pre processing of the messages!
 
     def should_generate_message(self, potential_answer):
         return bool(potential_answer) and self.pass_turn_token not in potential_answer

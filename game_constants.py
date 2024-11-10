@@ -8,6 +8,7 @@ REMAINING_PLAYERS_FILE = "remaining_players.txt"
 MAFIA_NAMES_FILE = "mafia_names.txt"
 PHASE_STATUS_FILE = "phase_status.txt"
 WHO_WINS_FILE = "who_wins.txt"
+GAME_START_TIME_FILE = "game_start_time.txt"
 PUBLIC_MANAGER_CHAT_FILE = "public_manager_chat.txt"
 PUBLIC_DAYTIME_CHAT_FILE = "public_daytime_chat.txt"
 PUBLIC_NIGHTTIME_CHAT_FILE = "public_nighttime_chat.txt"
@@ -50,13 +51,17 @@ NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MIN
 LLM_VOTE_KEYWORD = "VOTE"
 LLM_VOTING_PATTERN = rf"{LLM_VOTE_KEYWORD} (\w[ \w]*)"  # at least one letter and before spaces
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
-DEFAULT_USE_TURN_TOKEN = "<speak>"
+DEFAULT_USE_TURN_TOKEN = "<send>"
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
                       f"The rules of the game: {RULES_OF_THE_GAME}"
 
 
+def get_current_timestamp():
+    return time.strftime(TIME_FORMAT_FOR_TIMESTAMP)
+
+
 def format_message(name, message):
-    timestamp = time.strftime(TIME_FORMAT_FOR_TIMESTAMP)
+    timestamp = get_current_timestamp()
     return MESSAGE_FORMAT.format(timestamp=timestamp, name=name, message=message) + "\n"
 
 
