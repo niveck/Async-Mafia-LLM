@@ -27,7 +27,7 @@ def get_llm_player():
         config = json.load(f)
     player_config = None
     for player in config["players"]:
-        if player["name"].lower() == player_name:
+        if player["name"].lower() == player_name.lower():
             player_config = player
             break
     if player_config is None:

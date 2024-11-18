@@ -31,13 +31,13 @@ def cached_pipeline(model_name, task):  # TODO: maybe use device as parameter?
     return pipeline(task, model_name, device_map="auto")
 
 
-def log_model_choice(answer):  # TODO rewrite this function and use it in every possible way
-    model_choices_logs_file = game_dir / "model_choices_logs.txt"
-    if not model_choices_logs_file.exists():
-        model_choices_logs_file.touch()
-    log = "model chose to NOT generate..." if answer is None else "model chose to generate!"
-    with open(model_choices_logs_file, "a") as f:
-        f.write(f"[{time.strftime(TIME_FORMAT_FOR_TIMESTAMP)}] {log}\n")
+# def log_model_choice(answer):  # TODO rewrite this function and use it in every possible way
+#     model_choices_logs_file = game_dir / "model_choices_logs.txt"
+#     if not model_choices_logs_file.exists():
+#         model_choices_logs_file.touch()
+#     log = "model chose to NOT generate..." if answer is None else "model chose to generate!"
+#     with open(model_choices_logs_file, "a") as f:
+#         f.write(f"[{time.strftime(TIME_FORMAT_FOR_TIMESTAMP)}] {log}\n")
 
 
 class LLMWrapper:
