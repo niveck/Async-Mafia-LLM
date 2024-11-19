@@ -26,7 +26,7 @@ class GenerateThenSchedulePlayer(LLMPlayer):
         if self.should_generate_message([potential_message] + message_history):
             return potential_message
         else:
-            return None
+            return ""
 
     def create_scheduling_prompt(self, potential_message, message_history):
         task = f"Here is a potential message you can send to the game's chat: " \

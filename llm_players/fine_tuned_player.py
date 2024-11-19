@@ -24,4 +24,4 @@ class FineTunedPlayer(LLMPlayer):
         if self.should_generate_message(potential_answer):
             return potential_answer
         else:
-            return None
+            return ""

@@ -22,7 +22,7 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
             prompt = self.create_generation_prompt(message_history)
             return self.llm.generate(prompt, self.get_system_info_message())
         else:
-            return None
+            return ""
 
     def create_scheduling_prompt(self, message_history):
         task = f"Do you want to send a message to the group chat now, or do you prefer to wait " \
