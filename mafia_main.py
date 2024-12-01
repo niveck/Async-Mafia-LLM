@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import sys
@@ -49,25 +50,18 @@ class Player:
         self.personal_status_file.write_text(VOTED_OUT)
 
 
-def init_game():
-    global game_dir  # TODO maybe add mechanism for using a game key (something like MGSZX) instead
-    game_dir = Path(DIRS_PREFIX) / time.strftime("%d%m%y_%H%M")
-    game_dir.mkdir(mode=0o777)
-    with open(sys.argv[1]) as f:
-        config = json.load(f)
-    players = [Player(**player_config) for player_config in config["players"]]
-    all_names_str = "\n".join([player.name for player in players])
-    (game_dir / PLAYER_NAMES_FILE).write_text(all_names_str)
-    (game_dir / REMAINING_PLAYERS_FILE).write_text(all_names_str)
-    all_mafia_names_str = [player.name for player in players if player.is_mafia]
-    (game_dir / MAFIA_NAMES_FILE).write_text("\n".join(all_mafia_names_str))
-    (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
-    (game_dir / PUBLIC_MANAGER_CHAT_FILE).touch()
-    (game_dir / PUBLIC_DAYTIME_CHAT_FILE).touch()
-    (game_dir / PUBLIC_NIGHTTIME_CHAT_FILE).touch()
-    (game_dir / WHO_WINS_FILE).touch()
-    (game_dir / GAME_START_TIME_FILE).touch()
-    return players
+def get_game_dir_from_user():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("game_id", help=f"{GAME_ID_NUM_DIGITS}-digit game id")
+    args = parser.parse_args()
+    return Path(DIRS_PREFIX) / args.game_id
+
+
+def get_players(config):
+    if type(config) is not dict:  # assume it's a path to the json file (
+        with open(config, "r") as original_file:
+            config = json.load(original_file)
+    return [Player(**player_config) for player_config in config[PLAYERS_KEY_IN_CONFIG]]
 
 
 def is_win_by_bystanders(mafia_players):
@@ -176,9 +170,9 @@ def end_game():
 
 
 def main():
-    if len(sys.argv) != 2:
-        raise ValueError(f"Usage: {Path(__file__).name} <json configuration path>")
-    players = init_game()
+    global game_dir
+    game_dir = get_game_dir_from_user()
+    players = get_players(game_dir / GAME_CONFIG_FILE)
     wait_for_players(players)
     while not is_game_over(players):
         run_nighttime(players)

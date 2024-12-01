@@ -1,8 +1,14 @@
 import time
 
 
+# new game preparation constants  # TODO maybe change all ".." paths to absolute/from root?
+DEFAULT_GAME_CONFIG = "configurations/1llm2humans.json"  # TODO choose a better config
+GAME_ID_NUM_DIGITS = 5
+NOTES_FILE = "notes.txt"  # for our use, post-game
+# TODO: remember to add a notes.txt file for each game so I can add it later!
 # files that host writes to and players read from
-DIRS_PREFIX = "./games"
+DIRS_PREFIX = "./games"  # TODO maybe change to absolute!
+GAME_CONFIG_FILE = "config.json"
 PLAYER_NAMES_FILE = "player_names.txt"
 REMAINING_PLAYERS_FILE = "remaining_players.txt"
 MAFIA_NAMES_FILE = "mafia_names.txt"
@@ -49,11 +55,27 @@ NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MIN
                               f"only mafia can communicate and see messages and votes."
 # LLM messages and constants
 LLM_VOTE_KEYWORD = "VOTE"
-LLM_VOTING_PATTERN = rf"{LLM_VOTE_KEYWORD} (\w[ \w]*)"  # at least one letter and before spaces
+LLM_VOTING_PATTERN = rf"{LLM_VOTE_KEYWORD} (\w[ \w]*)"  # at least one letter and before spaces  # TODO no need anymore
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
 DEFAULT_USE_TURN_TOKEN = "<send>"
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
                       f"The rules of the game: {RULES_OF_THE_GAME}"
+# new configuration preparation constants
+PLAYERS_KEY_IN_CONFIG = "players"
+DEFAULT_CONFIG_DIR = "./configurations"
+DEFAULT_NUM_MAFIA = 2
+MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA = 5
+MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA = 7
+DEFAULT_NUM_PLAYERS = MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA
+WARNING_LIMIT_NUM_MAFIA = 3
+# I've tried using mainly unisex names...
+OPTIONAL_CODE_NAMES = ["Addison", "Adrian", "Alex", "Angel", "Ari", "Ariel", "Ashton", "Avery",
+                       "Bailey",  "Blake", "Brook", "Cameron", "Casey", "Charlie", "Dakota", "Drew",
+                       "Dylan", "Eden", "Elliot", "Emerson", "Finley", "Frankie", "Gray", "Harley",
+                       "Harper", "Hayden", "Jamie", "Jordan", "Kai", "Kennedy", "Lee", "Lennon",
+                       "Logan", "Mickey", "Morgan", "Parker", "Peyton", "Quinn", "Ray", "Reese",
+                       "Remi", "Riley", "River", "Robin", "Rowan", "Sage", "Sam", "Sidney",
+                       "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 
 
 def get_current_timestamp():

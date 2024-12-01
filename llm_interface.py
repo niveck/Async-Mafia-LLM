@@ -10,7 +10,7 @@ from llm_players.factory import llm_player_factory
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
-WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second
+WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second  # TODO change such that using this feature will be determined by the LLM config in the game config
 
 
 # global variable
@@ -26,7 +26,7 @@ def get_llm_player():
     with open(config_path) as f:
         config = json.load(f)
     player_config = None
-    for player in config["players"]:
+    for player in config[PLAYERS_KEY_IN_CONFIG]:
         if player["name"].lower() == player_name.lower():
             player_config = player
             break
