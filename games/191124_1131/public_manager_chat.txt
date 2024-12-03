@@ -1,0 +1,8 @@
+[11:52:52] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
+[11:53:52] Game-Manager: Niv1 was voted out. Their role was bystander
+[11:53:52] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
+[11:56:52] Game-Manager: Gabi was voted out. Their role was mafia
+[11:56:53] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
+[11:57:53] Game-Manager: Niv3 was voted out. Their role was bystander
+[11:57:53] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
+[12:00:53] Game-Manager: Uri was voted out. Their role was mafia
