@@ -1,8 +1,31 @@
+"""
+usage: prepare_config.py [-h] [-o OUTPUT] [-p PLAYERS] [-m MAFIA] [-l {0,1}]
+                         [-b] [-n NAMES_FILE]
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        output config file name
+  -p PLAYERS, --players PLAYERS
+                        total number of players in game
+  -m MAFIA, --mafia MAFIA
+                        number of mafia players in game
+  -l {0,1}, --llm {0,1}
+                        number of LLM players in game, currently supports
+                        maximum 1
+  -b, --bystander       whether the LLM player can only be bystander (not
+                        mafia)
+  -n NAMES_FILE, --names_file NAMES_FILE
+                        path to file with the participating players' real
+                        names (before code names assignment), separated by new
+                        line breaks ('\n')
+"""
 import json
 import argparse
 import random
 import time
 from pathlib import Path
+from termcolor import colored
 from dataclasses import dataclass, asdict
 from game_constants import DEFAULT_CONFIG_DIR, DEFAULT_NUM_PLAYERS, DEFAULT_NUM_MAFIA, \
     MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA, MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA, OPTIONAL_CODE_NAMES, \
@@ -12,16 +35,18 @@ from game_constants import DEFAULT_CONFIG_DIR, DEFAULT_NUM_PLAYERS, DEFAULT_NUM_
 @dataclass
 class PlayerConfig:  # TODO maybe add an LLM sub-config dict
     name: str  # code name from the game's pool (in constants file)
-    real_name: str = ""
     is_mafia: bool = False
     is_llm: bool = False
+    real_name: str = ""
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output", default=None, help="output config file name")
-    parser.add_argument("-p", "--players", default=None, help="total number of players in game")
-    parser.add_argument("-m", "--mafia", default=None, help="number of mafia players in game")
+    parser.add_argument("-p", "--players", type=int, default=None,
+                        help="total number of players in game")
+    parser.add_argument("-m", "--mafia", type=int, default=None,
+                        help="number of mafia players in game")
     parser.add_argument("-l", "--llm", type=int, default=1, choices=[0, 1],
                         # since participants will rank the (single) LLM player performance
                         help="number of LLM players in game, currently supports maximum 1")
@@ -37,11 +62,15 @@ def parse_args():
 def handle_output_file(args):
     output_file = args.output
     if output_file is None:
-        output_file = DEFAULT_CONFIG_DIR + "/config" + time.strftime("%d%m%y_%H%M") + ".json"
+        output_file = "config" + time.strftime("%d%m%y_%H%M")
+    if not output_file.startswith(DEFAULT_CONFIG_DIR):
+        output_file = DEFAULT_CONFIG_DIR + "/" + output_file
+    if not output_file.endswith(".json"):
+        output_file += ".json"
     output_file = Path(output_file)
     if output_file.exists():
         input("Warning: the destination output path already exists... "
-              "[enter to continue, Ctrl+C to cancel]")
+              "[enter to continue and override, Ctrl+C to cancel]")
     else:
         output_file.touch()  # to raise an error immediately if the new path is invalid
     return output_file
@@ -50,17 +79,22 @@ def handle_output_file(args):
 def handle_num_players(args):
     num_players = args.players
     if num_players is None:
-        print(f"Using default number of total players: {DEFAULT_NUM_PLAYERS}")
         num_players = DEFAULT_NUM_PLAYERS
+        print(f"Using default number of total players: {DEFAULT_NUM_PLAYERS}")
     elif num_players < MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA:
-        raise ValueError(f"{num_players} is not enough players to play a game!"
+        raise ValueError(f"{num_players} is not enough players to play a game! "
                          f"Minimum is {MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA} players.")
+    else:
+        print(f"Using number of total players: {num_players}")
     num_mafia = args.mafia
     if num_mafia is None:
-        num_mafia = DEFAULT_NUM_MAFIA
-    if num_mafia > 1 and num_players < MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA:
+        num_mafia = 1 if num_players < MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA else DEFAULT_NUM_MAFIA
+        print(f"Using default number of mafia players: {num_mafia}")
+    elif num_mafia > 1 and num_players < MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA:
         raise ValueError(f"With only {num_players} players you can only have one mafia!")
-    elif num_mafia >= WARNING_LIMIT_NUM_MAFIA:
+    else:
+        print(f"Using number of mafia players: {num_mafia}")
+    if num_mafia >= WARNING_LIMIT_NUM_MAFIA:
         print(f"Pay attention that {num_mafia} mafia players might be too many "
               f"if you don't have enough players in total...")
     code_names = random.sample(OPTIONAL_CODE_NAMES, num_players)
@@ -76,7 +110,8 @@ def handle_llm_participation(args, player_configs):
     print(f"Using {num_llms} LLM player{'' if num_llms == 1 else ''}")
     if num_llms > 0:
         if args.bystander:
-            print("The LLM can only be a bystander, not mafia")
+            print("The LLM can only be a bystander, not mafia "
+                  "(was set by the -b/--bystander argument)")
             potential_llm_players = [player_config for player_config in player_configs
                                      if not player_config.is_mafia]
         else:
@@ -95,17 +130,24 @@ def assign_real_names(args, player_configs):
         real_names = []
     else:  # split() removes the '\n' and ignores empty lines
         real_names = Path(args.names_file).read_text().split()
-    print("The given real names of participating players:")
-    print(",  ".join([f"{i + 1}. {name}" for i, name in enumerate(real_names)]))
+    if len(set(real_names)) < len(real_names):
+        raise ValueError("The supplied names file contain repetition of the same name!")
+    if real_names:
+        print("The given real names of participating players:")
+        print(",  ".join([f"{i + 1}. {name}" for i, name in enumerate(real_names)]))
     if len(human_players) < len(real_names):
         print(f"Warning: {len(real_names)} participating names given, "
               f"only {len(human_players)} needed for human players, "
               f"using only the first {len(human_players)}...")
         real_names = real_names[:len(human_players)]
-    elif len(human_players) < len(real_names):
-        while len(human_players) < len(real_names):
-            real_names.append(input("Still not enough participating names, "
-                                    "provide another one: ").strip())
+    elif len(human_players) > len(real_names):
+        while len(human_players) > len(real_names):
+            new_real_name = input("Still not enough real names of participating players, "
+                                  "provide another one: ").strip()
+            if not new_real_name or new_real_name in real_names:
+                print("This name belongs to a player that was already listed!")
+            else:
+                real_names.append(new_real_name)
     # now len(human_players) == len(real_names)
     for human_player, real_name in zip(human_players, real_names):
         human_player.real_name = real_name
@@ -116,7 +158,7 @@ def save_config(output_file, player_configs):
               "notes": input("Add notes to this config: [or enter to skip] ").strip()}
     with open(output_file, "w") as f:
         json.dump(config, f, indent=4)
-    print(f"Configuration was created and saved to: {output_file}")
+    print("Configuration was created and saved to:", colored(output_file, "green"))
 
 
 def main():

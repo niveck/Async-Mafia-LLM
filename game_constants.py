@@ -1,10 +1,11 @@
 import argparse
+import random
 import time
 from pathlib import Path
 
 
-# new game preparation constants  # TODO maybe change all ".." paths to absolute/from root?
-DEFAULT_GAME_CONFIG = "configurations/1llm2humans.json"  # TODO choose a better config
+# new game preparation constants
+DEFAULT_GAME_CONFIG = "configurations/minimalist_game.json"
 GAME_ID_NUM_DIGITS = 5
 NOTES_FILE = "notes.txt"  # for our use, post-game
 # TODO: remember to add a notes.txt file for each game so I can add it later!
@@ -75,10 +76,11 @@ WARNING_LIMIT_NUM_MAFIA = 3
 OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by Claud + additions
     "Addison", "Adrian", "Alex", "Angel", "Ari", "Ariel", "Ashton", "Avery", "Bailey", "Blake",
     "Brook", "Cameron", "Casey", "Charlie", "Dakota", "Drew", "Dylan", "Eden", "Elliot", "Emerson",
-    "Finley", "Frankie", "Gray", "Harley", "Harper", "Hayden", "Jamie", "Jordan", "Kai", "Kennedy",
-    "Lee", "Lennon", "Logan", "Mickey", "Morgan", "Parker", "Peyton", "Quinn", "Ray", "Reese",
-    "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney", "Skylar",
-    "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
+    "Finley", "Frankie", "Gray", "Harley", "Harper", "Hayden", "Jackie", "Jamie", "Jordan", "Kai",
+    "Kennedy", "Lee", "Lennon", "Logan", "Mickey", "Morgan", "Noah", "Parker", "Peyton", "Quinn",
+    "Ray", "Reese", "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney",
+    "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
+random.shuffle(OPTIONAL_CODE_NAMES)  # without it some names are sampled too often...
 
 
 def get_current_timestamp():

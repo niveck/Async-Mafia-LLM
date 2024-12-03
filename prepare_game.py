@@ -54,7 +54,7 @@ def init_game(game_id, config_path):
     all_mafia_names_str = [player.name for player in players if player.is_mafia]
     (game_dir / MAFIA_NAMES_FILE).write_text("\n".join(all_mafia_names_str))
     real_name_to_codename_str = [f"{player.real_name}{REAL_NAME_CODENAME_DELIMITER}{player.name}"
-                                 for player in players if player.is_mafia]
+                                 for player in players if not player.is_llm]
     (game_dir / REAL_NAMES_FILE).write_text("\n".join(real_name_to_codename_str))
     (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
     (game_dir / PUBLIC_MANAGER_CHAT_FILE).touch()

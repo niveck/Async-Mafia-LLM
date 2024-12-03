@@ -48,7 +48,7 @@ class LLMWrapper:
         self.pipeline_task = kwargs.get("pipeline_task", TEXT_GENERATION_TASK)
         self.max_new_tokens = kwargs.get("max_new_tokens", MAX_NEW_TOKENS)
         self.num_beams = kwargs.get("num_beams", NUM_BEAMS)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.prompt_template = self._get_prompt_template()
         if self.use_pipeline:
             self.pipeline = cached_pipeline(self.model_name, self.pipeline_task)

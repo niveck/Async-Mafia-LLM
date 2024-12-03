@@ -1,0 +1,35 @@
+{
+    "players": [
+        {
+            "name": "Dakota",
+            "is_mafia": false,
+            "is_llm": false,
+            "real_name": "Gabi"
+        },
+        {
+            "name": "Jamie",
+            "is_mafia": false,
+            "is_llm": true,
+            "real_name": "LLM0"
+        },
+        {
+            "name": "River",
+            "is_mafia": false,
+            "is_llm": false,
+            "real_name": "Uri"
+        },
+        {
+            "name": "Winter",
+            "is_mafia": false,
+            "is_llm": false,
+            "real_name": "Niv1"
+        },
+        {
+            "name": "Skylar",
+            "is_mafia": true,
+            "is_llm": false,
+            "real_name": "Niv2"
+        }
+    ],
+    "notes": ""
+}

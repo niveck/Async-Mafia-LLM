@@ -11,9 +11,10 @@ game_dir = Path()  # will be updated only if __name__ == __main__ (prevents new 
 
 class Player:
 
-    def __init__(self, name, is_mafia, real_name="", **kwargs):
+    def __init__(self, name, is_mafia, is_llm, real_name="", **kwargs):
         self.name = name
         self.is_mafia = is_mafia
+        self.is_llm = is_llm
         self.real_name = real_name
         self.personal_chat_file = self._create_personal_file(PERSONAL_CHAT_FILE_FORMAT)
         self.personal_chat_file_lines_read = 0

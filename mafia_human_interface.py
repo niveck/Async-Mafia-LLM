@@ -25,7 +25,7 @@ YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
 game_dir = Path()  # will be updated in welcome_player
 
 
-def get_player_names_by_id(player_names):  # TODO needed to change so they choose their real names from the config!
+def get_player_names_by_id(player_names):
     return {f"{i}": name for i, name in enumerate(player_names) if name}
 
 
@@ -102,7 +102,7 @@ def welcome_player():
     game_dir = get_game_dir_from_argv()
     print(colored(WELCOME_MESSAGE, MANAGER_COLOR))
     print(colored(RULES_OF_THE_GAME, MANAGER_COLOR))
-    real_names_to_codenames_str = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+    real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
     real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
                                     for real_to_code in real_names_to_codenames_str])
     real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
