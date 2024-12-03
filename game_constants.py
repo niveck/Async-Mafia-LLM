@@ -1,4 +1,6 @@
+import argparse
 import time
+from pathlib import Path
 
 
 # new game preparation constants  # TODO maybe change all ".." paths to absolute/from root?
@@ -12,6 +14,7 @@ GAME_CONFIG_FILE = "config.json"
 PLAYER_NAMES_FILE = "player_names.txt"
 REMAINING_PLAYERS_FILE = "remaining_players.txt"
 MAFIA_NAMES_FILE = "mafia_names.txt"
+REAL_NAMES_FILE = "real_names.txt"  # mapping of real names to code names
 PHASE_STATUS_FILE = "phase_status.txt"
 WHO_WINS_FILE = "who_wins.txt"
 GAME_START_TIME_FILE = "game_start_time.txt"
@@ -44,6 +47,7 @@ TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
 MESSAGE_FORMAT = "[{timestamp}] {name}: {message}"
 VOTING_MESSAGE_FORMAT = "{} voted for {}"
 VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
+REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
 # game constants
 NIGHTTIME_TIME_LIMIT_MINUTES = 1  # 2
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
@@ -68,14 +72,13 @@ MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA = 5
 MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA = 7
 DEFAULT_NUM_PLAYERS = MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA
 WARNING_LIMIT_NUM_MAFIA = 3
-# I've tried using mainly unisex names...
-OPTIONAL_CODE_NAMES = ["Addison", "Adrian", "Alex", "Angel", "Ari", "Ariel", "Ashton", "Avery",
-                       "Bailey",  "Blake", "Brook", "Cameron", "Casey", "Charlie", "Dakota", "Drew",
-                       "Dylan", "Eden", "Elliot", "Emerson", "Finley", "Frankie", "Gray", "Harley",
-                       "Harper", "Hayden", "Jamie", "Jordan", "Kai", "Kennedy", "Lee", "Lennon",
-                       "Logan", "Mickey", "Morgan", "Parker", "Peyton", "Quinn", "Ray", "Reese",
-                       "Remi", "Riley", "River", "Robin", "Rowan", "Sage", "Sam", "Sidney",
-                       "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
+OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by Claud + additions
+    "Addison", "Adrian", "Alex", "Angel", "Ari", "Ariel", "Ashton", "Avery", "Bailey", "Blake",
+    "Brook", "Cameron", "Casey", "Charlie", "Dakota", "Drew", "Dylan", "Eden", "Elliot", "Emerson",
+    "Finley", "Frankie", "Gray", "Harley", "Harper", "Hayden", "Jamie", "Jordan", "Kai", "Kennedy",
+    "Lee", "Lennon", "Logan", "Mickey", "Morgan", "Parker", "Peyton", "Quinn", "Ray", "Reese",
+    "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney", "Skylar",
+    "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 
 
 def get_current_timestamp():
@@ -89,3 +92,10 @@ def format_message(name, message):
 
 def get_role_string(is_mafia):
     return MAFIA_ROLE if is_mafia else BYSTANDER_ROLE
+
+
+def get_game_dir_from_argv():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("game_id", help=f"{GAME_ID_NUM_DIGITS}-digit game id")
+    args = parser.parse_args()
+    return Path(DIRS_PREFIX) / args.game_id

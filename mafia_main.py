@@ -1,9 +1,7 @@
-import argparse
 import json
 import os
-import sys
 import time  # already in constants...
-from pathlib import Path
+from pathlib import Path  # already in constants...
 from game_constants import *
 
 
@@ -13,9 +11,10 @@ game_dir = Path()  # will be updated only if __name__ == __main__ (prevents new 
 
 class Player:
 
-    def __init__(self, name, is_mafia, **kwargs):
+    def __init__(self, name, is_mafia, real_name="", **kwargs):
         self.name = name
         self.is_mafia = is_mafia
+        self.real_name = real_name
         self.personal_chat_file = self._create_personal_file(PERSONAL_CHAT_FILE_FORMAT)
         self.personal_chat_file_lines_read = 0
         self.personal_vote_file = self._create_personal_file(PERSONAL_VOTE_FILE_FORMAT)
@@ -48,13 +47,6 @@ class Player:
 
     def eliminate(self):
         self.personal_status_file.write_text(VOTED_OUT)
-
-
-def get_game_dir_from_user():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("game_id", help=f"{GAME_ID_NUM_DIGITS}-digit game id")
-    args = parser.parse_args()
-    return Path(DIRS_PREFIX) / args.game_id
 
 
 def get_players(config):
@@ -171,12 +163,12 @@ def end_game():
 
 def main():
     global game_dir
-    game_dir = get_game_dir_from_user()
+    game_dir = get_game_dir_from_argv()
     players = get_players(game_dir / GAME_CONFIG_FILE)
     wait_for_players(players)
     while not is_game_over(players):
-        run_nighttime(players)
         run_daytime(players)
+        run_nighttime(players)
     end_game()
 
 

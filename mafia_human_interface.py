@@ -1,5 +1,4 @@
-import os
-from pathlib import Path
+from pathlib import Path  # already in constants...
 from termcolor import colored
 from threading import Thread  # TODO divide this file so there will be one version for multi threading and one version for separate windows
 from game_constants import *
@@ -16,23 +15,22 @@ VOTE_FLAG = "VOTE"
 GET_INPUT_MESSAGE = f"Enter a message to public chat, or '{VOTE_FLAG}' to cast a vote: "
 GET_VOTED_NAME_MESSAGE = "Make your vote! You can change your vote until elimination is done." \
                          "Enter your vote's number: "
-ROLE_REVELATION_MESSAGE = "Your role in the game is:"
+CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {0}! Your name for this game will be:"
+ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
+MAFIA_REVELATION_MESSAGE = "Mafia members were:"
 YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
 
 
 # global variable
-input(colored("Press enter only after the main game code started running...",  # to get latest dir
-              MANAGER_COLOR))  # TODO maybe change it to get an argument for the game's key
-game_dir = max(Path(DIRS_PREFIX).glob("*"), key=os.path.getmtime)  # latest modified dir
+game_dir = Path()  # will be updated in welcome_player
 
 
-def get_player_names_by_id(player_names_file):
-    player_names = (game_dir / player_names_file).read_text().splitlines()
+def get_player_names_by_id(player_names):  # TODO needed to change so they choose their real names from the config!
     return {f"{i}": name for i, name in enumerate(player_names) if name}
 
 
-def get_player_name_from_user(optional_player_names_file, input_message):
-    player_names_by_id = get_player_names_by_id(optional_player_names_file)
+def get_player_name_from_user(optional_player_names, input_message):
+    player_names_by_id = get_player_names_by_id(optional_player_names)
     name_id = ""
     enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
     while name_id not in player_names_by_id:
@@ -71,7 +69,8 @@ def read_game_text(is_mafia):
 
 
 def collect_vote(name):
-    voted_name = get_player_name_from_user(REMAINING_PLAYERS_FILE, GET_VOTED_NAME_MESSAGE)
+    remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+    voted_name = get_player_name_from_user(remaining_player_names, GET_VOTED_NAME_MESSAGE)
     (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
 
 
@@ -99,9 +98,17 @@ def game_read_and_write_loop(name, is_mafia):
 
 
 def welcome_player():
+    global game_dir
+    game_dir = get_game_dir_from_argv()
     print(colored(WELCOME_MESSAGE, MANAGER_COLOR))
     print(colored(RULES_OF_THE_GAME, MANAGER_COLOR))
-    name = get_player_name_from_user(PLAYER_NAMES_FILE, GET_USER_NAME_MESSAGE)
+    real_names_to_codenames_str = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+    real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
+                                    for real_to_code in real_names_to_codenames_str])
+    real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
+    name = real_names_to_codenames[real_name]
+    print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR),
+          colored(name, MANAGER_COLOR, attrs=["bold"]))
     is_mafia = get_is_mafia(name)
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
@@ -113,8 +120,8 @@ def game_over_message():
     who_wins = (game_dir / WHO_WINS_FILE).read_text().strip()
     print(colored(who_wins, MANAGER_COLOR))
     mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()  # removes the "\n"
-    mafia_revelation = f"Mafia members were: " + ",".join(mafia_names)
-    print(colored(mafia_revelation, MANAGER_COLOR))
+    print(colored(MAFIA_REVELATION_MESSAGE, MANAGER_COLOR),
+          colored(", ".join(mafia_names), MANAGER_COLOR, attrs=["bold"]))
 
 
 def main():

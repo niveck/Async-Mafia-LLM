@@ -2,7 +2,7 @@ import json
 import os
 import re
 import sys
-from pathlib import Path
+from pathlib import Path  # already in constants...
 from termcolor import colored
 from game_constants import *
 from game_status_checks import is_nighttime, is_game_over, is_voted_out
@@ -54,7 +54,7 @@ def eliminate(player):
     pass
 
 
-def match_llm_voting_format(message):
+def matches_llm_voting_format(message):
     return re.match(LLM_VOTING_PATTERN, message)
 
 
@@ -68,7 +68,7 @@ def add_message_to_game(player, message_history):
         return  # only mafia can communicate during nighttime
     message = player.generate_message(message_history).strip()
     if message:
-        if match_llm_voting_format(message):
+        if matches_llm_voting_format(message):
             # TODO maybe log the way it outputted only the voting format
             update_vote(message, player.name)
         else:

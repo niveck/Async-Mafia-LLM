@@ -5,7 +5,7 @@ from pathlib import Path
 from game_constants import DIRS_PREFIX, DEFAULT_GAME_CONFIG, GAME_ID_NUM_DIGITS, GAME_CONFIG_FILE, \
     PLAYER_NAMES_FILE, REMAINING_PLAYERS_FILE, MAFIA_NAMES_FILE, PHASE_STATUS_FILE, NIGHTTIME, \
     PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, PUBLIC_NIGHTTIME_CHAT_FILE, WHO_WINS_FILE, \
-    GAME_START_TIME_FILE, NOTES_FILE
+    GAME_START_TIME_FILE, NOTES_FILE, REAL_NAME_CODENAME_DELIMITER, REAL_NAMES_FILE
 from mafia_main import get_players
 
 
@@ -53,6 +53,9 @@ def init_game(game_id, config_path):
     (game_dir / REMAINING_PLAYERS_FILE).write_text(all_names_str)
     all_mafia_names_str = [player.name for player in players if player.is_mafia]
     (game_dir / MAFIA_NAMES_FILE).write_text("\n".join(all_mafia_names_str))
+    real_name_to_codename_str = [f"{player.real_name}{REAL_NAME_CODENAME_DELIMITER}{player.name}"
+                                 for player in players if player.is_mafia]
+    (game_dir / REAL_NAMES_FILE).write_text("\n".join(real_name_to_codename_str))
     (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
     (game_dir / PUBLIC_MANAGER_CHAT_FILE).touch()
     (game_dir / PUBLIC_DAYTIME_CHAT_FILE).touch()
