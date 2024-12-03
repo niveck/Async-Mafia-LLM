@@ -1,7 +1,6 @@
-from pathlib import Path  # already in constants...
 from termcolor import colored
 from threading import Thread  # TODO divide this file so there will be one version for multi threading and one version for separate windows
-from game_constants import *
+from game_constants import *  # including: argparse, time, Path (from pathlib)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out
 
 # output colors
@@ -19,6 +18,7 @@ CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {0}! Your name for this game will be
 ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
 MAFIA_REVELATION_MESSAGE = "Mafia members were:"
 YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
+WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to start the game..."
 
 
 # global variable
@@ -97,6 +97,11 @@ def game_read_and_write_loop(name, is_mafia):
     read_game_text(is_mafia)
 
 
+def all_players_joined():
+    # game is started by manager after all players joined, and then the file will not be empty
+    return bool((game_dir / GAME_START_TIME_FILE).read_text())
+
+
 def welcome_player():
     global game_dir
     game_dir = get_game_dir_from_argv()
@@ -113,6 +118,11 @@ def welcome_player():
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
     print(colored(ROLE_REVELATION_MESSAGE, MANAGER_COLOR), colored(role, role_color))
+    (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(name)).write_text(JOINED)
+    print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
+    while not all_players_joined():
+        pass
+    # The game manager automatically posts a message that will be printed when the game starts
     return name, is_mafia
 
 

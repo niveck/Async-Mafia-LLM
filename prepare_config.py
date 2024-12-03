@@ -23,6 +23,7 @@ options:
 import json
 import argparse
 import random
+import sys
 import time
 from pathlib import Path
 from termcolor import colored
@@ -74,6 +75,12 @@ def handle_output_file(args):
     else:
         output_file.touch()  # to raise an error immediately if the new path is invalid
     return output_file
+
+
+def validate_names_file(args):
+    if args.names_file is not None and not Path(args.names_file).exists():
+        raise ValueError("Provided names file (with -n/--names_file) does not exist:",
+                         args.names_file)
 
 
 def handle_num_players(args):
@@ -155,7 +162,8 @@ def assign_real_names(args, player_configs):
 
 def save_config(output_file, player_configs):
     config = {PLAYERS_KEY_IN_CONFIG: [asdict(player_config) for player_config in player_configs],
-              "notes": input("Add notes to this config: [or enter to skip] ").strip()}
+              "notes": input("Add notes to this config: [or enter to skip] ").strip(),
+              "preparation_command": " ".join(sys.argv)}
     with open(output_file, "w") as f:
         json.dump(config, f, indent=4)
     print("Configuration was created and saved to:", colored(output_file, "green"))
@@ -164,6 +172,7 @@ def save_config(output_file, player_configs):
 def main():
     args = parse_args()
     output_file = handle_output_file(args)  # done first to immediately raise error if invalid
+    validate_names_file(args)
     player_configs = handle_num_players(args)
     handle_llm_participation(args, player_configs)
     assign_real_names(args, player_configs)

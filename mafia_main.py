@@ -1,8 +1,6 @@
 import json
 import os
-import time  # already in constants...
-from pathlib import Path  # already in constants...
-from game_constants import *
+from game_constants import *  # including: argparse, time, Path (from pathlib)
 
 
 # global variable for the game dir
@@ -11,22 +9,15 @@ game_dir = Path()  # will be updated only if __name__ == __main__ (prevents new 
 
 class Player:
 
-    def __init__(self, name, is_mafia, is_llm, real_name="", **kwargs):
+    def __init__(self, name, is_mafia, **kwargs):
         self.name = name
         self.is_mafia = is_mafia
-        self.is_llm = is_llm
-        self.real_name = real_name
-        self.personal_chat_file = self._create_personal_file(PERSONAL_CHAT_FILE_FORMAT)
+        self.personal_chat_file = game_dir / PERSONAL_CHAT_FILE_FORMAT.format(self.name)
         self.personal_chat_file_lines_read = 0
-        self.personal_vote_file = self._create_personal_file(PERSONAL_VOTE_FILE_FORMAT)
-        self.personal_vote_file_last_modified = os.path.getmtime(self.personal_vote_file)
-        # status is whether the player was vote out
-        self.personal_status_file = self._create_personal_file(PERSONAL_STATUS_FILE_FORMAT)
-
-    def _create_personal_file(self, file_name_format):
-        new_file = game_dir / file_name_format.format(self.name)
-        new_file.touch()
-        return new_file
+        self.personal_vote_file = game_dir / PERSONAL_VOTE_FILE_FORMAT.format(self.name)
+        self.personal_vote_file_last_modified = os.path.getmtime(self.personal_vote_file)  # TODO: change the mechanism such that they always vote!
+        # status is whether the player has joined and then whether was voted out
+        self.personal_status_file = game_dir / PERSONAL_STATUS_FILE_FORMAT.format(self.name)
 
     def get_new_messages(self):
         with open(self.personal_chat_file, "r") as f:
@@ -50,10 +41,10 @@ class Player:
         self.personal_status_file.write_text(VOTED_OUT)
 
 
-def get_players(config):
-    if type(config) is not dict:  # assume it's a path to the json file (
-        with open(config, "r") as original_file:
-            config = json.load(original_file)
+def get_players():
+    config_path = game_dir / GAME_CONFIG_FILE
+    with open(config_path, "r") as original_file:
+        config = json.load(original_file)
     return [Player(**player_config) for player_config in config[PLAYERS_KEY_IN_CONFIG]]
 
 
@@ -151,9 +142,16 @@ def run_daytime(players):
 
 
 def wait_for_players(players):
-    # TODO: this is only temporary,
-    #  maybe use something automatic, like all players need to sign up in their files...
-    input("As game manager, use Enter to start the game after all players have entered: ")
+    print("Waiting for all players to connect and start running their programs to join...")
+    havent_joined_yet = [player for player in players]
+    while havent_joined_yet:
+        joined = []
+        for player in havent_joined_yet:
+            if bool(player.personal_status_file.read_text()):  # file isn't empty once joined
+                joined.append(player)
+                print(f"{player.name} has joined!")
+        for player in joined:
+            havent_joined_yet.remove(player)
     (game_dir / GAME_START_TIME_FILE).write_text(get_current_timestamp())
     print("Game is now running! Its content is displayed to players.")
 
@@ -165,7 +163,7 @@ def end_game():
 def main():
     global game_dir
     game_dir = get_game_dir_from_argv()
-    players = get_players(game_dir / GAME_CONFIG_FILE)
+    players = get_players()
     wait_for_players(players)
     while not is_game_over(players):
         run_daytime(players)

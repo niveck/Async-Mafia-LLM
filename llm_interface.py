@@ -2,9 +2,8 @@ import json
 import os
 import re
 import sys
-from pathlib import Path  # already in constants...
 from termcolor import colored
-from game_constants import *
+from game_constants import *  # including: argparse, time, Path (from pathlib)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out
 from llm_players.factory import llm_player_factory
 
@@ -17,6 +16,7 @@ WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally p
 input(colored("Press enter only after the main game code started running...",  # to get latest dir
               OPERATOR_COLOR))  # TODO maybe change it to get an argument for the game's key
 game_dir = max(Path(DIRS_PREFIX).glob("*"), key=os.path.getmtime)  # latest modified dir
+# TODO cpy the mechanism of argparse from human interface + (!!!) add the status update
 
 
 def get_llm_player():

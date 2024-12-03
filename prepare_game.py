@@ -3,10 +3,12 @@ import json
 import argparse
 from pathlib import Path
 from game_constants import DIRS_PREFIX, DEFAULT_GAME_CONFIG, GAME_ID_NUM_DIGITS, GAME_CONFIG_FILE, \
-    PLAYER_NAMES_FILE, REMAINING_PLAYERS_FILE, MAFIA_NAMES_FILE, PHASE_STATUS_FILE, NIGHTTIME, \
+    PLAYER_NAMES_FILE, REMAINING_PLAYERS_FILE, MAFIA_NAMES_FILE, PHASE_STATUS_FILE, DAYTIME, \
     PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, PUBLIC_NIGHTTIME_CHAT_FILE, WHO_WINS_FILE, \
-    GAME_START_TIME_FILE, NOTES_FILE, REAL_NAME_CODENAME_DELIMITER, REAL_NAMES_FILE
-from mafia_main import get_players
+    GAME_START_TIME_FILE, NOTES_FILE, REAL_NAME_CODENAME_DELIMITER, REAL_NAMES_FILE, \
+    PLAYERS_KEY_IN_CONFIG, PERSONAL_STATUS_FILE_FORMAT, PERSONAL_CHAT_FILE_FORMAT, \
+    PERSONAL_VOTE_FILE_FORMAT
+from prepare_config import PlayerConfig
 
 
 def get_next_free_game_id():
@@ -35,6 +37,7 @@ def get_id_and_config():
     config_path = args.config
     if config_path is None:
         print(f"(!) Using default config path: {DEFAULT_GAME_CONFIG}")
+        config_path = DEFAULT_GAME_CONFIG
     if not Path(config_path).exists():
         raise ValueError(f"Can't use this config because its path doesn't exist: {config_path}")
     return game_id, config_path
@@ -45,9 +48,10 @@ def init_game(game_id, config_path):
     game_dir.mkdir(mode=0o777)
     with open(config_path, "r") as original_file:
         config = json.load(original_file)
+    config["config_original_path_when_game_created"] = config_path
     with open(game_dir / GAME_CONFIG_FILE, "w") as output_file:
         json.dump(config, output_file, indent=4)
-    players = get_players(config)
+    players = [PlayerConfig(**player_config) for player_config in config[PLAYERS_KEY_IN_CONFIG]]
     all_names_str = "\n".join([player.name for player in players])
     (game_dir / PLAYER_NAMES_FILE).write_text(all_names_str)
     (game_dir / REMAINING_PLAYERS_FILE).write_text(all_names_str)
@@ -56,13 +60,17 @@ def init_game(game_id, config_path):
     real_name_to_codename_str = [f"{player.real_name}{REAL_NAME_CODENAME_DELIMITER}{player.name}"
                                  for player in players if not player.is_llm]
     (game_dir / REAL_NAMES_FILE).write_text("\n".join(real_name_to_codename_str))
-    (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
+    (game_dir / PHASE_STATUS_FILE).write_text(DAYTIME)
     (game_dir / PUBLIC_MANAGER_CHAT_FILE).touch()
     (game_dir / PUBLIC_DAYTIME_CHAT_FILE).touch()
     (game_dir / PUBLIC_NIGHTTIME_CHAT_FILE).touch()
     (game_dir / WHO_WINS_FILE).touch()
     (game_dir / GAME_START_TIME_FILE).touch()
     (game_dir / NOTES_FILE).touch()
+    for player in players:
+        (game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name)).touch()
+        (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).touch()
+        (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(player.name)).touch()
     # since for some reason the `mode` arg in mkdir doesn't work properly:
     os.system(f"chmod -R 777 {game_dir}")
     print(f"Successfully created a new game dir in: {game_dir.absolute()}")

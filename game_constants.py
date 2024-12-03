@@ -29,6 +29,7 @@ PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
 # constant strings for info files
 NIGHTTIME = "NIGHTTIME"
 DAYTIME = "DAYTIME"
+JOINED = "JOINED"
 VOTED_OUT = "VOTED_OUT"
 MAFIA_ROLE = "mafia"
 BYSTANDER_ROLE = "bystander"
@@ -98,6 +99,9 @@ def get_role_string(is_mafia):
 
 def get_game_dir_from_argv():
     parser = argparse.ArgumentParser()
-    parser.add_argument("game_id", help=f"{GAME_ID_NUM_DIGITS}-digit game id")
+    parser.add_argument("game_id", help=f"{GAME_ID_NUM_DIGITS}-digit game ID")
     args = parser.parse_args()
-    return Path(DIRS_PREFIX) / args.game_id
+    game_dir = Path(DIRS_PREFIX) / args.game_id
+    if not game_dir.exists():
+        raise ValueError(f"The supplied game ID {args.game_id} doesn't belong to a configured game")
+    return game_dir
