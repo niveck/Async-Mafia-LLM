@@ -74,33 +74,46 @@ def run_chat_round_between_players(players, chat_room):
             f.writelines(lines)  # lines already include "\n"
 
 
-def allow_players_to_vote_in_phase_end(phase_name, public_chat_file):
-    phase_end_message = DAYTIME_END_MESSAGE if phase_name == DAYTIME else NIGHTTIME_END_MESSAGE
-    with open(public_chat_file, "a") as f:
+def notify_players_about_voting_time(phase_name, public_chat_file):
+    voting_phase_name = NIGHTTIME_VOTING_TIME if phase_name == NIGHTTIME else DAYTIME_VOTING_TIME
+    (game_dir / PHASE_STATUS_FILE).write_text(voting_phase_name)
+    phase_end_message = NIGHTTIME_VOTING_TIME_MESSAGE if phase_name == DAYTIME else DAYTIME_VOTING_TIME_MESSAGE
+    with open(public_chat_file, "a") as f:  # only to the current phase's active players chat room
         f.write(format_message(GAME_MANAGER_NAME, phase_end_message))
-    time.sleep(VOTING_TIME_LIMIT_SECONDS)
 
 
-def get_voted_out_player(voting_players, optional_votes_players, public_chat_file):
+def get_voted_out_name(optional_votes_players, public_chat_file, voting_players):
     votes = {player.name: 0 for player in optional_votes_players}
-    for player in voting_players:
-        if player.did_cast_new_vote():
-            voted_for = player.get_voted_player()
-            if voted_for in votes:
-                with open(public_chat_file, "a") as f:  # TODO: maybe don't announce who voted for who?...
-                    voting_message = VOTING_MESSAGE_FORMAT.format(player.name, player.get_voted_player())
-                    f.write(format_message(GAME_MANAGER_NAME, voting_message))
-                votes[voted_for] += 1
+    while voting_players:
+        voted_players = []
+        for player in voting_players:
+            if player.did_cast_new_vote():
+                voted_players.append(player)
+                voted_for = player.get_voted_player()
+                if voted_for in votes:
+                    with open(public_chat_file, "a") as f:  # TODO: maybe don't announce who voted for who?...
+                        voting_message = VOTING_MESSAGE_FORMAT.format(player.name, voted_for)
+                        f.write(format_message(GAME_MANAGER_NAME, voting_message))
+                    votes[voted_for] += 1
+        for player in voted_players:
+            voting_players.remove(player)
     # if there were invalid votes or if there was a tie, decision will be made "randomly"
     voted_out_name = max(votes, key=votes.get)
+    return voted_out_name
+
+
+def voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players):
+    notify_players_about_voting_time(phase_name, public_chat_file)
+    voted_out_name = get_voted_out_name(optional_votes_players, public_chat_file, voting_players)
     # update info file of remaining players
     remaining_players = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
     remaining_players.remove(voted_out_name)
     (game_dir / REMAINING_PLAYERS_FILE).write_text("\n".join(remaining_players))
     # update player object status
-    voted_out_player = {player.name: player for player in optional_votes_players}[voted_out_name]
+    voted_out_player = {player.name: player for player in optional_votes_players}[voted_out_name]  # TODO: when I ran it, there was a key error bug here
     voted_out_player.eliminate()
-    return voted_out_player
+    players.remove(voted_out_player)
+    announce_voted_out_player(voted_out_player)
 
 
 def game_manager_announcement(message):
@@ -119,10 +132,7 @@ def run_phase(players, voting_players, optional_votes_players, public_chat_file,
     start_time = time.time()
     while time.time() - start_time < time_limit_seconds:
         run_chat_round_between_players(voting_players, public_chat_file)
-    allow_players_to_vote_in_phase_end(phase_name, public_chat_file)
-    voted_out_player = get_voted_out_player(voting_players, optional_votes_players, public_chat_file)
-    players.remove(voted_out_player)
-    announce_voted_out_player(voted_out_player)
+    voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players)
 
 
 def announce_nighttime():

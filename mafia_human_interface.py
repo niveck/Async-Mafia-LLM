@@ -1,7 +1,7 @@
 from termcolor import colored
 from threading import Thread  # TODO divide this file so there will be one version for multi threading and one version for separate windows
 from game_constants import *  # including: argparse, time, Path (from pathlib)
-from game_status_checks import is_nighttime, is_game_over, is_voted_out, check_for_time_to_vote
+from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote
 
 # output colors
 MANAGER_COLOR = "green"
@@ -11,13 +11,11 @@ NIGHTTIME_COLOR = "red"
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number: "
 VOTE_FLAG = "VOTE"
-# GET_INPUT_MESSAGE = f"Enter a message to public chat, or '{VOTE_FLAG}' to cast a vote: "  # TODO make sure no need to use anymore and can be removed
 GET_CHAT_INPUT_MESSAGE = f"Enter a message to the public chat: "
-VOTE_INSTRUCTION_MESSAGE = f"You have {VOTING_TIME_LIMIT_SECONDS} seconds to cast your vote!\n" \
+VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
                            f"Enter '{VOTE_FLAG}' as your input to vote..."
-GET_VOTED_NAME_MESSAGE = "Make your vote! You can change your vote until elimination is done." \
-                         "Enter your vote's number: "
-CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {0}! Your name for this game will be:"
+GET_VOTED_NAME_MESSAGE_FORMAT = "It's time to make your vote, {}!\nEnter your vote's number:"
+CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {}! Your name for this game will be:"
 ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
 MAFIA_REVELATION_MESSAGE = "Mafia members were:"
 YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
@@ -26,7 +24,6 @@ WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to st
 
 # global variable
 game_dir = Path()  # will be updated in welcome_player
-is_time_to_vote = False
 
 
 def get_player_names_by_id(player_names):
@@ -38,8 +35,7 @@ def get_player_name_from_user(optional_player_names, input_message):
     name_id = ""
     enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
     while name_id not in player_names_by_id:
-        name_id = input(colored(f"{input_message}\n{enumerated_names} ",
-                                MANAGER_COLOR))
+        name_id = input(colored(f"{input_message}\n{enumerated_names}\n", MANAGER_COLOR))
     name = player_names_by_id[name_id]
     return name
 
@@ -50,15 +46,12 @@ def get_is_mafia(name):
 
 
 def display_lines_from_file(file_name, num_read_lines, display_color):
-    global is_time_to_vote
     with open(game_dir / file_name, "r") as f:
         lines = f.readlines()[num_read_lines:]
     if len(lines) > 0:  # TODO if print() is deleted then remove this if!
         print()  # prevents the messages from being printed in the same line as the middle of input  # TODO validate it's not needed and delete if so
         for line in lines:
             print(colored(line.strip(), display_color))  # TODO maybe need display_line func for special format?
-            if check_for_time_to_vote(line):
-                is_time_to_vote = True
     return len(lines)
 
 
@@ -67,7 +60,6 @@ def ask_player_to_vote():
 
 
 def read_game_text(is_mafia):
-    global is_time_to_vote
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):
         num_read_lines_manager += display_lines_from_file(
@@ -78,14 +70,17 @@ def read_game_text(is_mafia):
         if is_mafia:  # only mafia can see what happens during nighttime
             num_read_lines_nighttime += display_lines_from_file(
                 PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
-        if is_time_to_vote:
+        if is_time_to_vote(game_dir):
             ask_player_to_vote()
-            is_time_to_vote = False
+            while is_time_to_vote(game_dir):
+                continue  # wait for voting time to end when all players have voted
 
 
 def collect_vote(name):
     remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
-    voted_name = get_player_name_from_user(remaining_player_names, GET_VOTED_NAME_MESSAGE)
+    remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
+    voted_name = get_player_name_from_user(remaining_player_names,
+                                           GET_VOTED_NAME_MESSAGE_FORMAT.format(name))
     (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
 
 
@@ -97,9 +92,13 @@ def write_text_to_game(name, is_mafia):
         if not is_mafia and is_nighttime(game_dir):
             continue  # only mafia can communicate during nighttime
         user_input = input(colored(GET_CHAT_INPUT_MESSAGE, MANAGER_COLOR)).strip()
-        if user_input == VOTE_FLAG:  # TODO maybe add a check that it is time to vote?... when it is divided to different terminal
+        if not user_input:
+            continue
+        elif user_input == VOTE_FLAG:
             collect_vote(name)
-        else:
+            while is_time_to_vote(game_dir):
+                continue  # wait for voting time to end when all players have voted
+        elif not is_time_to_vote(game_dir):  # if it's time to vote then players can't chat
             with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(name), "a") as f:
                 f.write(format_message(name, user_input))
 
@@ -127,16 +126,17 @@ def welcome_player():
                                     for real_to_code in real_names_to_codenames_str])
     real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
     name = real_names_to_codenames[real_name]
-    print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR),
-          colored(name, MANAGER_COLOR, attrs=["bold"]))
+    print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR))
+    print(colored(name, MANAGER_COLOR, attrs=["bold"]))
     is_mafia = get_is_mafia(name)
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
-    print(colored(ROLE_REVELATION_MESSAGE, MANAGER_COLOR), colored(role, role_color))
+    print(colored(ROLE_REVELATION_MESSAGE, MANAGER_COLOR))
+    print(colored(role, role_color))
     (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(name)).write_text(JOINED)
     print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
     while not all_players_joined():
-        pass
+        continue
     # The game manager automatically posts a message that will be printed when the game starts
     return name, is_mafia
 

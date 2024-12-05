@@ -6,7 +6,7 @@ from pathlib import Path
 
 # new game preparation constants
 DEFAULT_GAME_CONFIG = "configurations/minimalist_game.json"
-GAME_ID_NUM_DIGITS = 5
+GAME_ID_NUM_DIGITS = 4
 NOTES_FILE = "notes.txt"  # for our use, post-game
 # TODO: remember to add a notes.txt file for each game so I can add it later!
 # files that host writes to and players read from
@@ -29,6 +29,9 @@ PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
 # constant strings for info files
 NIGHTTIME = "Nighttime"
 DAYTIME = "Daytime"
+VOTING_TIME = "Voting"
+NIGHTTIME_VOTING_TIME = NIGHTTIME + "_" + VOTING_TIME  # keeps the is_nighttime function mechanism
+DAYTIME_VOTING_TIME = DAYTIME + "_" + VOTING_TIME
 JOINED = "JOINED"
 VOTED_OUT = "VOTED_OUT"
 MAFIA_ROLE = "mafia"
@@ -51,17 +54,19 @@ VOTING_MESSAGE_FORMAT = "{} voted for {}"
 VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
 REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
 # game constants
-NIGHTTIME_TIME_LIMIT_MINUTES = 1  # 2
+NIGHTTIME_TIME_LIMIT_MINUTES = 1
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
-DAYTIME_TIME_LIMIT_MINUTES = 3  # 5
+DAYTIME_TIME_LIMIT_MINUTES = 1  # 3  # TODO return to 3! TODO: actually check times in original paper
 DAYTIME_TIME_LIMIT_SECONDS = int(DAYTIME_TIME_LIMIT_MINUTES * 60)
-VOTING_TIME_LIMIT_SECONDS = 10
+VOTING_TIME_LIMIT_SECONDS = 15
 DAYTIME_BEGINNING_MESSAGE = f"Now it's Daytime for {DAYTIME_TIME_LIMIT_MINUTES} minutes, " \
                             f"everyone can communicate and see messages and votes."
 NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MINUTES} minutes, " \
                               f"only mafia can communicate and see messages and votes."
-DAYTIME_END_MESSAGE = "Daytime has ended, now it's time to vote!"
-NIGHTTIME_END_MESSAGE = "Nighttime has ended, now it's time to vote!"
+VOTING_TIME_MESSAGE_FORMAT = "{} has ended, now it's time to vote! " \
+                             "Waiting for all players to vote..."
+DAYTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(DAYTIME)
+NIGHTTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(NIGHTTIME)
 # LLM messages and constants
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
 DEFAULT_USE_TURN_TOKEN = "<send>"
