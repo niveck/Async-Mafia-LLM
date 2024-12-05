@@ -4,7 +4,7 @@ import re
 import sys
 from termcolor import colored
 from game_constants import *  # including: argparse, time, Path (from pathlib)
-from game_status_checks import is_nighttime, is_game_over, is_voted_out
+from game_status_checks import is_nighttime, is_game_over, is_voted_out, check_for_time_to_vote
 from llm_players.factory import llm_player_factory
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
@@ -17,6 +17,7 @@ input(colored("Press enter only after the main game code started running...",  #
               OPERATOR_COLOR))  # TODO maybe change it to get an argument for the game's key
 game_dir = max(Path(DIRS_PREFIX).glob("*"), key=os.path.getmtime)  # latest modified dir
 # TODO cpy the mechanism of argparse from human interface + (!!!) add the status update
+is_time_to_vote = False
 
 
 def get_llm_player():
@@ -38,9 +39,12 @@ def get_llm_player():
 
 
 def read_messages_from_file(message_history, file_name, num_read_lines):
+    global is_time_to_vote
     with open(game_dir / file_name, "r") as f:
         lines = f.readlines()[num_read_lines:]
-    message_history.extend(lines)  # TODO validate it updates the outer scope list
+    message_history.extend(lines)
+    if any([check_for_time_to_vote(line) for line in lines]):
+        is_time_to_vote = True
     return len(lines)
 
 
@@ -54,13 +58,14 @@ def eliminate(player):
     pass
 
 
-def matches_llm_voting_format(message):
-    return re.match(LLM_VOTING_PATTERN, message)
-
-
-def update_vote(message, name):
-    voted_name = re.findall(LLM_VOTING_PATTERN, message)[0]
-    (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
+def get_vote_from_llm(player, message_history):
+    candidate_vote_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+    voting_message = player.get_vote(message_history, candidate_vote_names)
+    for name in candidate_vote_names:
+        if name in voting_message:  # update game manger
+            (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).write_text(name)
+            return
+    # TODO: add log that if didn't return, then voting message didn't have a possible name
 
 
 def add_message_to_game(player, message_history):
@@ -68,13 +73,8 @@ def add_message_to_game(player, message_history):
         return  # only mafia can communicate during nighttime
     message = player.generate_message(message_history).strip()
     if message:
-        if matches_llm_voting_format(message):
-            # TODO maybe log the way it outputted only the voting format
-            update_vote(message, player.name)
-        else:
-            # TODO maybe log that the message was not matched as a vote?...
-            with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
-                f.write(format_message(player.name, message))
+        with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
+            f.write(format_message(player.name, message))
         wait_writing_time(message)  # artificially making the model taking time to write the message
 
 
@@ -84,6 +84,7 @@ def end_game():
 
 
 def main():
+    global is_time_to_vote
     player = get_llm_player()
     message_history = []
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
@@ -99,6 +100,11 @@ def main():
         if is_voted_out(player.name, game_dir):
             eliminate(player)
             break
+        if is_time_to_vote:
+            get_vote_from_llm(player, message_history)
+            # TODO: prevent it from continue sending new messages while everyone is voting
+            time.sleep(VOTING_TIME_LIMIT_SECONDS // 2)
+            is_time_to_vote = False
         add_message_to_game(player, message_history)
     end_game()
 

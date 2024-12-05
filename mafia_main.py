@@ -42,9 +42,8 @@ class Player:
 
 
 def get_players():
-    config_path = game_dir / GAME_CONFIG_FILE
-    with open(config_path, "r") as original_file:
-        config = json.load(original_file)
+    with open(game_dir / GAME_CONFIG_FILE, "r") as f:
+        config = json.load(f)
     return [Player(**player_config) for player_config in config[PLAYERS_KEY_IN_CONFIG]]
 
 
@@ -73,18 +72,25 @@ def run_chat_round_between_players(players, chat_room):
         lines = player.get_new_messages()
         with open(chat_room, "a") as f:
             f.writelines(lines)  # lines already include "\n"
-        if player.did_cast_new_vote():
-            with open(chat_room, "a") as f:
-                voting_message = VOTING_MESSAGE_FORMAT.format(player.name, player.get_voted_player())
-                f.write(format_message(GAME_MANAGER_NAME, voting_message))
 
 
-def get_voted_out_player(voting_players, optional_votes_players):
+def allow_players_to_vote_in_phase_end(phase_name, public_chat_file):
+    phase_end_message = DAYTIME_END_MESSAGE if phase_name == DAYTIME else NIGHTTIME_END_MESSAGE
+    with open(public_chat_file, "a") as f:
+        f.write(format_message(GAME_MANAGER_NAME, phase_end_message))
+    time.sleep(VOTING_TIME_LIMIT_SECONDS)
+
+
+def get_voted_out_player(voting_players, optional_votes_players, public_chat_file):
     votes = {player.name: 0 for player in optional_votes_players}
     for player in voting_players:
-        voted_for = player.get_voted_player()
-        if voted_for in votes:
-            votes[voted_for] += 1
+        if player.did_cast_new_vote():
+            voted_for = player.get_voted_player()
+            if voted_for in votes:
+                with open(public_chat_file, "a") as f:  # TODO: maybe don't announce who voted for who?...
+                    voting_message = VOTING_MESSAGE_FORMAT.format(player.name, player.get_voted_player())
+                    f.write(format_message(GAME_MANAGER_NAME, voting_message))
+                votes[voted_for] += 1
     # if there were invalid votes or if there was a tie, decision will be made "randomly"
     voted_out_name = max(votes, key=votes.get)
     # update info file of remaining players
@@ -108,11 +114,13 @@ def announce_voted_out_player(voted_out_player):
     game_manager_announcement(voted_out_message)
 
 
-def run_phase(players, voting_players, optional_votes_players, public_chat_file, time_limit_seconds):
+def run_phase(players, voting_players, optional_votes_players, public_chat_file,
+              time_limit_seconds, phase_name):
     start_time = time.time()
     while time.time() - start_time < time_limit_seconds:
         run_chat_round_between_players(voting_players, public_chat_file)
-    voted_out_player = get_voted_out_player(voting_players, optional_votes_players)
+    allow_players_to_vote_in_phase_end(phase_name, public_chat_file)
+    voted_out_player = get_voted_out_player(voting_players, optional_votes_players, public_chat_file)
     players.remove(voted_out_player)
     announce_voted_out_player(voted_out_player)
 
@@ -127,7 +135,7 @@ def run_nighttime(players):
     bystanders = [player for player in players if not player.is_mafia]
     announce_nighttime()
     run_phase(players, mafia_players, bystanders, game_dir / PUBLIC_NIGHTTIME_CHAT_FILE,
-              NIGHTTIME_TIME_LIMIT_SECONDS)
+              NIGHTTIME_TIME_LIMIT_SECONDS, NIGHTTIME)
 
 
 def announce_daytime():
@@ -138,12 +146,13 @@ def run_daytime(players):
     (game_dir / PHASE_STATUS_FILE).write_text(DAYTIME)
     announce_daytime()
     run_phase(players, players, players, game_dir / PUBLIC_DAYTIME_CHAT_FILE,
-              DAYTIME_TIME_LIMIT_SECONDS)
+              DAYTIME_TIME_LIMIT_SECONDS, DAYTIME)
 
 
 def wait_for_players(players):
-    print("Waiting for all players to connect and start running their programs to join...")
     havent_joined_yet = [player for player in players]
+    print("Waiting for all players to connect and start running their programs to join:")
+    print(",  ".join([player.name for player in havent_joined_yet]))
     while havent_joined_yet:
         joined = []
         for player in havent_joined_yet:

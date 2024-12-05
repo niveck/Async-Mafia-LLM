@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from game_constants import get_role_string, DEFAULT_PASS_TURN_TOKEN, DEFAULT_USE_TURN_TOKEN, \
     GENERAL_SYSTEM_INFO, GAME_START_TIME_FILE
+from llm_players.llm_constants import turn_task_into_prompt
 from llm_players.llm_wrapper import LLMWrapper
 
 
@@ -32,3 +33,10 @@ class LLMPlayer(ABC):
     @abstractmethod
     def generate_message(self, message_history):
         raise NotImplementedError()
+
+    def get_vote(self, message_history, candidate_vote_names):
+        task = "From the following remaining players, which player you want to vote for to " \
+               "eliminate? Reply with only one name from the list, and nothing but the name: "
+        task += ", ".join(candidate_vote_names)
+        prompt = turn_task_into_prompt(task, message_history)
+        return self.llm.generate(prompt, self.get_system_info_message())

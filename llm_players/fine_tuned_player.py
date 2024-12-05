@@ -25,3 +25,6 @@ class FineTunedPlayer(LLMPlayer):
             return potential_answer
         else:
             return ""
+
+    def get_vote(self, message_history, candidate_vote_names):
+        raise NotImplementedError()  # TODO implement! needs to overrun the prompting default

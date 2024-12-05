@@ -1,5 +1,5 @@
 from game_constants import NIGHTTIME, PHASE_STATUS_FILE, WHO_WINS_FILE, VOTED_OUT, \
-    PERSONAL_STATUS_FILE_FORMAT
+    PERSONAL_STATUS_FILE_FORMAT, DAYTIME_END_MESSAGE, NIGHTTIME_END_MESSAGE
 
 
 def is_nighttime(game_dir):
@@ -12,3 +12,7 @@ def is_game_over(game_dir):
 
 def is_voted_out(name, game_dir):
     return VOTED_OUT in (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(name)).read_text()
+
+
+def check_for_time_to_vote(line):
+    return DAYTIME_END_MESSAGE in line or NIGHTTIME_END_MESSAGE in line

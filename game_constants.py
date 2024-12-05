@@ -27,8 +27,8 @@ PERSONAL_STATUS_FILE_FORMAT = "{}_status.txt"
 PERSONAL_CHAT_FILE_FORMAT = "{}_chat.txt"
 PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
 # constant strings for info files
-NIGHTTIME = "NIGHTTIME"
-DAYTIME = "DAYTIME"
+NIGHTTIME = "Nighttime"
+DAYTIME = "Daytime"
 JOINED = "JOINED"
 VOTED_OUT = "VOTED_OUT"
 MAFIA_ROLE = "mafia"
@@ -55,13 +55,14 @@ NIGHTTIME_TIME_LIMIT_MINUTES = 1  # 2
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
 DAYTIME_TIME_LIMIT_MINUTES = 3  # 5
 DAYTIME_TIME_LIMIT_SECONDS = int(DAYTIME_TIME_LIMIT_MINUTES * 60)
+VOTING_TIME_LIMIT_SECONDS = 10
 DAYTIME_BEGINNING_MESSAGE = f"Now it's Daytime for {DAYTIME_TIME_LIMIT_MINUTES} minutes, " \
                             f"everyone can communicate and see messages and votes."
 NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MINUTES} minutes, " \
                               f"only mafia can communicate and see messages and votes."
+DAYTIME_END_MESSAGE = "Daytime has ended, now it's time to vote!"
+NIGHTTIME_END_MESSAGE = "Nighttime has ended, now it's time to vote!"
 # LLM messages and constants
-LLM_VOTE_KEYWORD = "VOTE"
-LLM_VOTING_PATTERN = rf"{LLM_VOTE_KEYWORD} (\w[ \w]*)"  # at least one letter and before spaces  # TODO no need anymore
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
 DEFAULT_USE_TURN_TOKEN = "<send>"
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
