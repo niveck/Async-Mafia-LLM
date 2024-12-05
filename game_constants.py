@@ -65,6 +65,8 @@ NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MIN
                               f"only mafia can communicate and see messages and votes."
 VOTING_TIME_MESSAGE_FORMAT = "{} has ended, now it's time to vote! " \
                              "Waiting for all players to vote..."
+CUTTING_TO_VOTE_MESSAGE = "There is only one mafia member left, so no need for discussion" \
+                          " - cutting straight to voting!"
 DAYTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(DAYTIME)
 NIGHTTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(NIGHTTIME)
 # LLM messages and constants

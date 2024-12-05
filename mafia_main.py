@@ -129,9 +129,12 @@ def announce_voted_out_player(voted_out_player):
 
 def run_phase(players, voting_players, optional_votes_players, public_chat_file,
               time_limit_seconds, phase_name):
-    start_time = time.time()
-    while time.time() - start_time < time_limit_seconds:
-        run_chat_round_between_players(voting_players, public_chat_file)
+    if len(voting_players) > 1:
+        start_time = time.time()
+        while time.time() - start_time < time_limit_seconds:
+            run_chat_round_between_players(voting_players, public_chat_file)
+    else:
+        game_manager_announcement(CUTTING_TO_VOTE_MESSAGE)
     voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players)
 
 
