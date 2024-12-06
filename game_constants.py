@@ -9,6 +9,7 @@ from termcolor import colored
 DEFAULT_GAME_CONFIG = "configurations/minimalist_game.json"
 GAME_ID_NUM_DIGITS = 4
 NOTES_FILE = "notes.txt"  # for our use, post-game
+
 # files that host writes to and players read from
 DIRS_PREFIX = "./games"  # TODO maybe change to absolute!
 GAME_CONFIG_FILE = "config.json"
@@ -22,10 +23,12 @@ GAME_START_TIME_FILE = "game_start_time.txt"
 PUBLIC_MANAGER_CHAT_FILE = "public_manager_chat.txt"
 PUBLIC_DAYTIME_CHAT_FILE = "public_daytime_chat.txt"
 PUBLIC_NIGHTTIME_CHAT_FILE = "public_nighttime_chat.txt"
+# file that is initial used for players to write "joined", and then for host to write "eliminated"
 PERSONAL_STATUS_FILE_FORMAT = "{}_status.txt"
 # files that hosts read from and players write to
 PERSONAL_CHAT_FILE_FORMAT = "{}_chat.txt"
 PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
+
 # constant strings for info files
 NIGHTTIME = "Nighttime"
 DAYTIME = "Daytime"
@@ -47,12 +50,14 @@ RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, eithe
                     "discuss together who they think the mafia players are and vote out another " \
                     "player. The mafia's goal is to outnumber the bystanders, and the " \
                     "bystanders' goal it to vote out all real mafia."
+
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
 MESSAGE_FORMAT = "[{timestamp}] {name}: {message}"
 VOTING_MESSAGE_FORMAT = "{} voted for {}"
 VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
 REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
+
 # game constants
 NIGHTTIME_TIME_LIMIT_MINUTES = 1
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
@@ -69,11 +74,13 @@ CUTTING_TO_VOTE_MESSAGE = "There is only one mafia member left, so no need for d
                           " - cutting straight to voting!"
 DAYTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(DAYTIME)
 NIGHTTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(NIGHTTIME)
+
 # LLM messages and constants
 DEFAULT_PASS_TURN_TOKEN = "<wait>"
 DEFAULT_USE_TURN_TOKEN = "<send>"
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
                       f"The rules of the game: {RULES_OF_THE_GAME}"
+
 # new configuration preparation constants
 PLAYERS_KEY_IN_CONFIG = "players"
 DEFAULT_CONFIG_DIR = "./configurations"
@@ -90,6 +97,23 @@ OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by C
     "Ray", "Reese", "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney",
     "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 random.shuffle(OPTIONAL_CODE_NAMES)  # without it some names are sampled too often...
+
+# human player interface constants
+MANAGER_COLOR = "green"
+DAYTIME_COLOR = "light_blue"
+NIGHTTIME_COLOR = "red"
+WELCOME_MESSAGE = "Welcome to the game of Mafia!"
+GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number: "
+VOTE_FLAG = "VOTE"
+GET_CHAT_INPUT_MESSAGE = f"Enter a message to the public chat: "
+VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
+                           f"Enter '{VOTE_FLAG}' as your input to vote..."
+GET_VOTED_NAME_MESSAGE_FORMAT = "It's time to make your vote, {}!\nEnter your vote's number:"
+CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {}! Your name for this game will be:"
+ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
+MAFIA_REVELATION_MESSAGE = "Mafia members were:"
+YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
+WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to start the game..."
 
 
 def get_current_timestamp():
