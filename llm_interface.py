@@ -1,39 +1,36 @@
 import json
-import os
-import re
-import sys
-from termcolor import colored
-from game_constants import *  # including: argparse, time, Path (from pathlib)
-from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote
+from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
+from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
+    all_players_joined
 from llm_players.factory import llm_player_factory
+
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
+GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
+ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
 WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second  # TODO change such that using this feature will be determined by the LLM config in the game config
 
 
 # global variable
-input(colored("Press enter only after the main game code started running...",  # to get latest dir
-              OPERATOR_COLOR))  # TODO maybe change it to get an argument for the game's key
-game_dir = max(Path(DIRS_PREFIX).glob("*"), key=os.path.getmtime)  # latest modified dir
-# TODO cpy the mechanism of argparse from human interface + (!!!) add the status update
+game_dir = Path()  # will be updated in get_llm_player
 
 
 def get_llm_player():
-    # TODO change to argparse with game and optional name if there is only one llm
-    if len(sys.argv) != 3:
-        raise ValueError(f"Usage: {Path(__file__).name} <json configuration path> <player name>")
-    config_path, player_name = sys.argv[1], sys.argv[2]
-    with open(config_path) as f:
+    global game_dir
+    game_dir = get_game_dir_from_argv()
+    with open(game_dir / GAME_CONFIG_FILE) as f:
         config = json.load(f)
-    player_config = None
-    for player in config[PLAYERS_KEY_IN_CONFIG]:
-        if player["name"].lower() == player_name.lower():
-            player_config = player
-            break
-    if player_config is None:
-        raise ValueError(f"Wrong input: '{player_name}' is not a name in the game "
-                         f"configured in {config_path}")
+    llm_players_configs = [player for player in config[PLAYERS_KEY_IN_CONFIG] if player["is_llm"]]
+    if not llm_players_configs:
+        raise ValueError("No LLM player configured in this game")
+    elif len(llm_players_configs) == 1:
+        player_config = llm_players_configs[0]
+    else:
+        player_name = get_player_name_from_user([player["name"] for player in llm_players_configs],
+                                                GET_LLM_PLAYER_NAME_MESSAGE, OPERATOR_COLOR)
+        player_config = [player for player in llm_players_configs
+                         if player["name"] == player_name][0]
     player_config["game_dir"] = game_dir
     return llm_player_factory(player_config)
 
@@ -51,7 +48,8 @@ def wait_writing_time(message):
 
 
 def eliminate(player):
-    # TODO print in OPERATOR_COLOR that it was eliminated, maybe log how much time it lasted in the game, how many players were left when it was voted out and maybe how many time it was voted for
+    print(colored(ELIMINATED_MESSAGE, OPERATOR_COLOR))
+    # TODO maybe log how much time it lasted in the game, how many players were left when it was voted out and maybe how many time it was voted for
     pass
 
 
@@ -82,6 +80,8 @@ def end_game():
 
 def main():
     player = get_llm_player()
+    while not all_players_joined(game_dir):
+        continue
     message_history = []
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):

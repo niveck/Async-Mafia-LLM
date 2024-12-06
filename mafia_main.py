@@ -1,6 +1,6 @@
 import json
 import os
-from game_constants import *  # including: argparse, time, Path (from pathlib)
+from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 
 
 # global variable for the game dir
@@ -15,7 +15,7 @@ class Player:
         self.personal_chat_file = game_dir / PERSONAL_CHAT_FILE_FORMAT.format(self.name)
         self.personal_chat_file_lines_read = 0
         self.personal_vote_file = game_dir / PERSONAL_VOTE_FILE_FORMAT.format(self.name)
-        self.personal_vote_file_last_modified = os.path.getmtime(self.personal_vote_file)  # TODO: change the mechanism such that they always vote!
+        self.personal_vote_file_last_modified = os.path.getmtime(self.personal_vote_file)
         # status is whether the player has joined and then whether was voted out
         self.personal_status_file = game_dir / PERSONAL_STATUS_FILE_FORMAT.format(self.name)
 

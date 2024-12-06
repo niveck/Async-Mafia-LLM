@@ -1,7 +1,8 @@
-from termcolor import colored
+# TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from threading import Thread  # TODO divide this file so there will be one version for multi threading and one version for separate windows
-from game_constants import *  # including: argparse, time, Path (from pathlib)
-from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote
+from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
+from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
+    all_players_joined
 
 # output colors
 MANAGER_COLOR = "green"
@@ -26,20 +27,6 @@ WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to st
 game_dir = Path()  # will be updated in welcome_player
 
 
-def get_player_names_by_id(player_names):
-    return {f"{i}": name for i, name in enumerate(player_names) if name}
-
-
-def get_player_name_from_user(optional_player_names, input_message):
-    player_names_by_id = get_player_names_by_id(optional_player_names)
-    name_id = ""
-    enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
-    while name_id not in player_names_by_id:
-        name_id = input(colored(f"{input_message}\n{enumerated_names}\n", MANAGER_COLOR))
-    name = player_names_by_id[name_id]
-    return name
-
-
 def get_is_mafia(name):
     mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()  # removes the "\n"
     return name in mafia_names
@@ -51,7 +38,7 @@ def display_lines_from_file(file_name, num_read_lines, display_color):
     if len(lines) > 0:  # TODO if print() is deleted then remove this if!
         print()  # prevents the messages from being printed in the same line as the middle of input  # TODO validate it's not needed and delete if so
         for line in lines:
-            print(colored(line.strip(), display_color))  # TODO maybe need display_line func for special format?
+            print(colored(line.strip(), display_color))
     return len(lines)
 
 
@@ -80,7 +67,7 @@ def collect_vote(name):
     remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
     remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
     voted_name = get_player_name_from_user(remaining_player_names,
-                                           GET_VOTED_NAME_MESSAGE_FORMAT.format(name))
+                                           GET_VOTED_NAME_MESSAGE_FORMAT.format(name), MANAGER_COLOR)
     (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
 
 
@@ -111,11 +98,6 @@ def game_read_and_write_loop(name, is_mafia):
     read_game_text(is_mafia)
 
 
-def all_players_joined():
-    # game is started by manager after all players joined, and then the file will not be empty
-    return bool((game_dir / GAME_START_TIME_FILE).read_text())
-
-
 def welcome_player():
     global game_dir
     game_dir = get_game_dir_from_argv()
@@ -124,7 +106,8 @@ def welcome_player():
     real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
     real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
                                     for real_to_code in real_names_to_codenames_str])
-    real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
+    real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE,
+                                          MANAGER_COLOR)
     name = real_names_to_codenames[real_name]
     print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR))
     print(colored(name, MANAGER_COLOR, attrs=["bold"]))
@@ -135,7 +118,7 @@ def welcome_player():
     print(colored(role, role_color))
     (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(name)).write_text(JOINED)
     print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
-    while not all_players_joined():
+    while not all_players_joined(game_dir):
         continue
     # The game manager automatically posts a message that will be printed when the game starts
     return name, is_mafia

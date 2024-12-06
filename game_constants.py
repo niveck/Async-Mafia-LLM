@@ -2,13 +2,13 @@ import argparse
 import random
 import time
 from pathlib import Path
+from termcolor import colored
 
 
 # new game preparation constants
 DEFAULT_GAME_CONFIG = "configurations/minimalist_game.json"
 GAME_ID_NUM_DIGITS = 4
 NOTES_FILE = "notes.txt"  # for our use, post-game
-# TODO: remember to add a notes.txt file for each game so I can add it later!
 # files that host writes to and players read from
 DIRS_PREFIX = "./games"  # TODO maybe change to absolute!
 GAME_CONFIG_FILE = "config.json"
@@ -113,3 +113,17 @@ def get_game_dir_from_argv():
     if not game_dir.exists():
         raise ValueError(f"The supplied game ID {args.game_id} doesn't belong to a configured game")
     return game_dir
+
+
+def get_player_names_by_id(player_names):
+    return {f"{i}": name for i, name in enumerate(player_names) if name}
+
+
+def get_player_name_from_user(optional_player_names, input_message, message_color):
+    player_names_by_id = get_player_names_by_id(optional_player_names)
+    name_id = ""
+    enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
+    while name_id not in player_names_by_id:
+        name_id = input(colored(f"{input_message}\n{enumerated_names}\n", message_color))
+    name = player_names_by_id[name_id]
+    return name
