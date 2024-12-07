@@ -104,7 +104,7 @@ def get_voted_out_name(optional_votes_players, public_chat_file, voting_players)
 
 def voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players):
     notify_players_about_voting_time(phase_name, public_chat_file)
-    voted_out_name = get_voted_out_name(optional_votes_players, public_chat_file, voting_players)
+    voted_out_name = get_voted_out_name(optional_votes_players, public_chat_file, voting_players[:])
     # update info file of remaining players
     remaining_players = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
     remaining_players.remove(voted_out_name)
