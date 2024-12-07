@@ -1,21 +1,31 @@
 # TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
-    all_players_joined
+    all_players_joined, get_is_mafia
 
 # global variable
 game_dir = Path()  # will be updated in get_name_and_role
 
 
 def get_name_and_role():
-    pass  # TODO!!!
+    global game_dir
+    game_dir = get_game_dir_from_argv()
+    print(colored(WELCOME_INPUT_INTERFACE_MESSAGE, MANAGER_COLOR))
+    player_names = (game_dir / PLAYER_NAMES_FILE).read_text().splitlines()
+    name = get_player_name_from_user(player_names, GET_CODE_NAME_FROM_USER_MESSAGE)
+    is_mafia = get_is_mafia(name, game_dir)
+    print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
+    while not all_players_joined(game_dir):
+        continue
+    print(colored(YOU_CAN_START_WRITING_MESSAGE, MANAGER_COLOR))
+    return name, is_mafia
 
 
 def collect_vote(name):
     remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
     remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
     voted_name = get_player_name_from_user(remaining_player_names,
-                                           GET_VOTED_NAME_MESSAGE_FORMAT.format(name), MANAGER_COLOR)
+                                           GET_VOTED_NAME_MESSAGE_FORMAT.format(name))
     (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
 
 

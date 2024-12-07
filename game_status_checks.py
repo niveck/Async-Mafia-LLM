@@ -1,5 +1,5 @@
 from game_constants import NIGHTTIME, PHASE_STATUS_FILE, WHO_WINS_FILE, VOTED_OUT, \
-    PERSONAL_STATUS_FILE_FORMAT, VOTING_TIME, GAME_START_TIME_FILE
+    PERSONAL_STATUS_FILE_FORMAT, VOTING_TIME, GAME_START_TIME_FILE, MAFIA_NAMES_FILE
 
 
 def is_nighttime(game_dir):
@@ -21,3 +21,8 @@ def is_time_to_vote(game_dir):
 def all_players_joined(game_dir):
     # game is started by manager after all players joined, and then the file will not be empty
     return bool((game_dir / GAME_START_TIME_FILE).read_text())
+
+
+def get_is_mafia(name, game_dir):
+    mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()  # removes the "\n"
+    return name in mafia_names

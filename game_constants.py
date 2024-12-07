@@ -63,7 +63,6 @@ NIGHTTIME_TIME_LIMIT_MINUTES = 1
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
 DAYTIME_TIME_LIMIT_MINUTES = 1  # 3  # TODO return to 3! TODO: actually check times in original paper
 DAYTIME_TIME_LIMIT_SECONDS = int(DAYTIME_TIME_LIMIT_MINUTES * 60)
-VOTING_TIME_LIMIT_SECONDS = 15
 DAYTIME_BEGINNING_MESSAGE = f"Now it's Daytime for {DAYTIME_TIME_LIMIT_MINUTES} minutes, " \
                             f"everyone can communicate and see messages and votes."
 NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MINUTES} minutes, " \
@@ -103,7 +102,7 @@ MANAGER_COLOR = "green"
 DAYTIME_COLOR = "light_blue"
 NIGHTTIME_COLOR = "red"
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
-GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number: "
+GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"
 GET_CHAT_INPUT_MESSAGE = f"Enter a message to the public chat: "
 VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
@@ -114,6 +113,12 @@ ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
 MAFIA_REVELATION_MESSAGE = "Mafia members were:"
 YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
 WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to start the game..."
+WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter your messages and " \
+                                  "votes.\nAll other game info, messages and chat will be " \
+                                  "visible in the chat interface (run by `player_chat.py`)"
+GET_CODE_NAME_FROM_USER_MESSAGE = "Enter the name you were given for this game " \
+                                  "(in the chat interface) - choose the name's number:"
+YOU_CAN_START_WRITING_MESSAGE = "You can now start writing messages to game!"
 
 
 def get_current_timestamp():
@@ -143,7 +148,7 @@ def get_player_names_by_id(player_names):
     return {f"{i}": name for i, name in enumerate(player_names) if name}
 
 
-def get_player_name_from_user(optional_player_names, input_message, message_color):
+def get_player_name_from_user(optional_player_names, input_message, message_color=MANAGER_COLOR):
     player_names_by_id = get_player_names_by_id(optional_player_names)
     name_id = ""
     enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
