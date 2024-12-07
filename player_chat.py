@@ -1,6 +1,7 @@
 # TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
-from game_status_checks import is_game_over, is_time_to_vote, all_players_joined, get_is_mafia
+from game_status_checks import is_game_over, is_time_to_vote, all_players_joined, get_is_mafia, \
+    is_nighttime
 
 
 def welcome_player(game_dir):
@@ -30,7 +31,7 @@ def display_lines_from_file(game_dir, file_name, num_read_lines, display_color):
     with open(game_dir / file_name, "r") as f:
         lines = f.readlines()[num_read_lines:]
     if len(lines) > 0:  # TODO if print() is deleted then remove this if!
-        print()  # prevents the messages from being printed in the same line as the middle of input  # TODO validate it's not needed and delete if so
+        print()  # prevents the messages from being printed in the same line as the middle of input
         for line in lines:
             print(colored(line.strip(), display_color))
     return len(lines)
@@ -40,13 +41,12 @@ def ask_player_to_vote():
     print(colored(VOTE_INSTRUCTION_MESSAGE, MANAGER_COLOR))
 
 
-def ask_player_to_vote_only_once(already_asked, game_dir):
+def ask_player_to_vote_only_once(already_asked, game_dir, is_mafia):
     if is_time_to_vote(game_dir):
-        if not already_asked:
+        # leaving the is_nighttime check to the end because it's expensive and might not be needed
+        if not already_asked and is_mafia or not is_nighttime(game_dir):
             ask_player_to_vote()
             already_asked = True
-        # while is_time_to_vote(game_dir):  # TODO maybe not needed? - if seemed not good then return
-        #     continue  # wait for voting time to end when all players have voted
     else:
         already_asked = False
     return already_asked
@@ -64,7 +64,7 @@ def read_game_text_loop(is_mafia, game_dir):
         if is_mafia:  # only mafia can see what happens during nighttime
             num_read_lines_nighttime += display_lines_from_file(
                 game_dir, PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
-        already_asked = ask_player_to_vote_only_once(already_asked, game_dir)
+        already_asked = ask_player_to_vote_only_once(already_asked, game_dir, is_mafia)
 
 
 def game_over_message(game_dir):
