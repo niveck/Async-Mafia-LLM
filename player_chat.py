@@ -5,7 +5,7 @@ from game_status_checks import is_game_over, is_time_to_vote, all_players_joined
 
 def welcome_player(game_dir):
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
-    print(colored(RULES_OF_THE_GAME, MANAGER_COLOR))
+    print(colored(RULES_OF_THE_GAME + "\n", MANAGER_COLOR))
     real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
     real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
                                     for real_to_code in real_names_to_codenames_str])
@@ -53,8 +53,8 @@ def read_game_text_loop(is_mafia, game_dir):
                 game_dir, PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
         if is_time_to_vote(game_dir):
             ask_player_to_vote()
-            while is_time_to_vote(game_dir):
-                continue  # wait for voting time to end when all players have voted
+            # while is_time_to_vote(game_dir):  # TODO maybe not needed? - if seemed not good then return
+            #     continue  # wait for voting time to end when all players have voted
 
 
 def game_over_message(game_dir):

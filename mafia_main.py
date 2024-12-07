@@ -75,11 +75,11 @@ def run_chat_round_between_players(players, chat_room):
 
 
 def notify_players_about_voting_time(phase_name, public_chat_file):
-    voting_phase_name = NIGHTTIME_VOTING_TIME if phase_name == NIGHTTIME else DAYTIME_VOTING_TIME
-    (game_dir / PHASE_STATUS_FILE).write_text(voting_phase_name)
-    phase_end_message = NIGHTTIME_VOTING_TIME_MESSAGE if phase_name == DAYTIME else DAYTIME_VOTING_TIME_MESSAGE
+    phase_end_message = DAYTIME_VOTING_TIME_MESSAGE if phase_name == DAYTIME else NIGHTTIME_VOTING_TIME_MESSAGE
     with open(public_chat_file, "a") as f:  # only to the current phase's active players chat room
         f.write(format_message(GAME_MANAGER_NAME, phase_end_message))
+    voting_phase_name = DAYTIME_VOTING_TIME if phase_name == DAYTIME else NIGHTTIME_VOTING_TIME
+    (game_dir / PHASE_STATUS_FILE).write_text(voting_phase_name)
 
 
 def get_voted_out_name(optional_votes_players, public_chat_file, voting_players):
