@@ -40,8 +40,21 @@ def ask_player_to_vote():
     print(colored(VOTE_INSTRUCTION_MESSAGE, MANAGER_COLOR))
 
 
+def ask_player_to_vote_only_once(already_asked, game_dir):
+    if is_time_to_vote(game_dir):
+        if not already_asked:
+            ask_player_to_vote()
+            already_asked = True
+        # while is_time_to_vote(game_dir):  # TODO maybe not needed? - if seemed not good then return
+        #     continue  # wait for voting time to end when all players have voted
+    else:
+        already_asked = False
+    return already_asked
+
+
 def read_game_text_loop(is_mafia, game_dir):
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
+    already_asked = False
     while not is_game_over(game_dir):
         num_read_lines_manager += display_lines_from_file(
             game_dir, PUBLIC_MANAGER_CHAT_FILE, num_read_lines_manager, MANAGER_COLOR)
@@ -51,10 +64,7 @@ def read_game_text_loop(is_mafia, game_dir):
         if is_mafia:  # only mafia can see what happens during nighttime
             num_read_lines_nighttime += display_lines_from_file(
                 game_dir, PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
-        if is_time_to_vote(game_dir):
-            ask_player_to_vote()
-            # while is_time_to_vote(game_dir):  # TODO maybe not needed? - if seemed not good then return
-            #     continue  # wait for voting time to end when all players have voted
+        already_asked = ask_player_to_vote_only_once(already_asked, game_dir)
 
 
 def game_over_message(game_dir):

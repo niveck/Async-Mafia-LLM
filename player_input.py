@@ -1,12 +1,13 @@
 # TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
-from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
+from game_constants import *  # incl. random, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined, get_is_mafia
 
 
 def get_name_and_role(game_dir):
-    print(colored(WELCOME_INPUT_INTERFACE_MESSAGE, MANAGER_COLOR))
+    print(colored(WELCOME_INPUT_INTERFACE_MESSAGE + "\n", MANAGER_COLOR))
     player_names = (game_dir / PLAYER_NAMES_FILE).read_text().splitlines()
+    random.shuffle(player_names)
     name = get_player_name_from_user(player_names, GET_CODE_NAME_FROM_USER_MESSAGE)
     is_mafia = get_is_mafia(name, game_dir)
     print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
