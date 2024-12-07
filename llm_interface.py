@@ -3,13 +3,13 @@ from game_constants import *  # incl. argparse, time, Path (from pathlib), color
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined
 from llm_players.factory import llm_player_factory
+from llm_players.llm_constants import GAME_DIR_KEY
 
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
 GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
 ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
-WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second  # TODO change such that using this feature will be determined by the LLM config in the game config
 
 
 # global variable
@@ -31,7 +31,7 @@ def get_llm_player():
                                                 GET_LLM_PLAYER_NAME_MESSAGE, OPERATOR_COLOR)
         player_config = [player for player in llm_players_configs
                          if player["name"] == player_name][0]
-    player_config["game_dir"] = game_dir
+    player_config[GAME_DIR_KEY] = game_dir  # TODO maybe GAME_DIR_KEY is unnecessary like "name"
     return llm_player_factory(player_config)
 
 
@@ -42,9 +42,10 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
     return len(lines)
 
 
-def wait_writing_time(message):
-    num_words = len(message.split())
-    time.sleep(num_words // WORDS_PER_SECOND_TO_WAIT)
+def wait_writing_time(player, message):
+    if player.num_words_per_second_to_wait > 0:
+        num_words = len(message.split())
+        time.sleep(num_words // player.num_words_per_second_to_wait)
 
 
 def eliminate(player):
@@ -55,6 +56,7 @@ def eliminate(player):
 
 def get_vote_from_llm(player, message_history):
     candidate_vote_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+    candidate_vote_names.remove(player.name)
     voting_message = player.get_vote(message_history, candidate_vote_names)
     for name in candidate_vote_names:
         if name in voting_message:  # update game manger
@@ -70,7 +72,8 @@ def add_message_to_game(player, message_history):
     if message:
         with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
             f.write(format_message(player.name, message))
-        wait_writing_time(message)  # artificially making the model taking time to write the message
+        # artificially making the model taking time to write the message
+        wait_writing_time(player, message)
 
 
 def end_game():

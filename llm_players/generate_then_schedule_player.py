@@ -1,16 +1,17 @@
-from llm_players.llm_constants import turn_task_into_prompt
+from llm_players.llm_constants import turn_task_into_prompt, GENERATE_THEN_SCHEDULE_TYPE
 from llm_players.llm_player import LLMPlayer
 from llm_players.llm_wrapper import LLMWrapper
 
 
 class GenerateThenSchedulePlayer(LLMPlayer):
 
-    TYPE_NAME = "schedule_then_generate"
+    TYPE_NAME = GENERATE_THEN_SCHEDULE_TYPE
 
-    def __init__(self, name, is_mafia, game_dir, **kwargs):
-        super().__init__(name, is_mafia, game_dir, **kwargs)
-        scheduler_kwargs = kwargs.get("scheduler_kwargs", kwargs)
-        self.scheduler = LLMWrapper(**scheduler_kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # scheduler_kwargs = kwargs.get("scheduler_kwargs", kwargs)
+        # self.scheduler = LLMWrapper(**scheduler_kwargs)
+        self.scheduler = self.llm  # trying to use the same one for generation...
 
     def should_generate_message(self, potential_message_and_message_history):
         # potential_message and message_history are combined because of parent class signature

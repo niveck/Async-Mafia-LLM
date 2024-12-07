@@ -7,7 +7,7 @@ from game_constants import DIRS_PREFIX, DEFAULT_GAME_CONFIG, GAME_ID_NUM_DIGITS,
     PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, PUBLIC_NIGHTTIME_CHAT_FILE, WHO_WINS_FILE, \
     GAME_START_TIME_FILE, NOTES_FILE, REAL_NAME_CODENAME_DELIMITER, REAL_NAMES_FILE, \
     PLAYERS_KEY_IN_CONFIG, PERSONAL_STATUS_FILE_FORMAT, PERSONAL_CHAT_FILE_FORMAT, \
-    PERSONAL_VOTE_FILE_FORMAT
+    PERSONAL_VOTE_FILE_FORMAT, LLM_LOG_FILE_FORMAT
 from prepare_config import PlayerConfig
 
 
@@ -71,6 +71,8 @@ def init_game(game_id, config_path):
         (game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name)).touch()
         (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).touch()
         (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(player.name)).touch()
+        if player.is_llm:
+            (game_dir / LLM_LOG_FILE_FORMAT.format(player.name)).touch()
     # since for some reason the `mode` arg in mkdir doesn't work properly:
     os.system(f"chmod -R 777 {game_dir}")
     print(f"Successfully created a new game dir in: {game_dir.absolute()}")

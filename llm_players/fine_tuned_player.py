@@ -1,3 +1,4 @@
+from llm_players.llm_constants import FINE_TUNED_TYPE
 from llm_players.llm_player import LLMPlayer
 
 DEFAULT_MODEL_PATH = ""  # TODO add the model path for my fine tuned mafia model
@@ -5,12 +6,12 @@ DEFAULT_MODEL_PATH = ""  # TODO add the model path for my fine tuned mafia model
 
 class FineTunedPlayer(LLMPlayer):
 
-    TYPE_NAME = "fine_tuned"
+    TYPE_NAME = FINE_TUNED_TYPE
 
-    def __init__(self, name, is_mafia, game_dir, **kwargs):
+    def __init__(self, **kwargs):
         model_name = kwargs.get("model_name", DEFAULT_MODEL_PATH)
-        kwargs["model_name"] = model_name  # setting the default model path for fine-tuned player
-        super().__init__(name, is_mafia, game_dir, **kwargs)
+        kwargs["model_name"] = model_name  # setting the default model path for fine-tuned player  # TODO: needs to be refactored, now it's not working anymore
+        super().__init__(**kwargs)
 
     def create_prompt(self, message_history):
         raise NotImplementedError()  # TODO implement! involves pre processing of the messages!

@@ -1,19 +1,78 @@
-from game_constants import get_current_timestamp
+from dataclasses import dataclass
+from game_constants import get_current_timestamp, RULES_OF_THE_GAME
 
-# DEFAULT_MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct"
-DEFAULT_MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
+MODEL_NAMES = [
+    "meta-llama/Llama-3.1-8B-Instruct",
+    "microsoft/Phi-3-mini-4k-instruct"
+]
+DEFAULT_MODEL_NAME = MODEL_NAMES[0]
+
 # prompts patterns:
 INSTRUCTION_INPUT_RESPONSE_PATTERN = "instruction-input-response prompt pattern"
 LLAMA3_PATTERN = "Llama 3 pattern"
 DEFAULT_PROMPT_PATTERN = "default"
+
 # generation hyper parameters:
-MAX_NEW_TOKENS = 100
-NUM_BEAMS = 4
+DEFAULT_MAX_NEW_TOKENS = 100
+DEFAULT_NUM_BEAMS = 4
+
+DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second  # TODO change such that using this feature will be determined by the LLM config in the game config
+
 # pipeline formats:
 TEXT_GENERATION_TASK = "text-generation"
 TASK2OUTPUT_FORMAT = {TEXT_GENERATION_TASK: "generated_text"}
+
 # text constants:
 INITIAL_GENERATION_PROMPT = "Do you understand the rules?"
+PASS_TURN_TOKEN_OPTIONS = ["<wait>", "<pass>", "<quiet>", "[[wait]]", "[[pass]]", "[[quiet]]"]
+USE_TURN_TOKEN_OPTIONS = ["<send>", "<speak>", "<use>", "[[send]]", "[[speak]]", "[[use]]"]
+DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
+DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
+GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
+                      f"The rules of the game: {RULES_OF_THE_GAME}"
+
+# LLM players type names:
+SCHEDULE_THEN_GENERATE_TYPE = "schedule_then_generate"
+GENERATE_THEN_SCHEDULE_TYPE = "generate_then_schedule"
+FINE_TUNED_TYPE = "fine_tuned"
+ASYNC_TYPES = [SCHEDULE_THEN_GENERATE_TYPE, GENERATE_THEN_SCHEDULE_TYPE, FINE_TUNED_TYPE]
+DEFAULT_ASYNC_TYPE = ASYNC_TYPES[0]
+
+# config keys:
+LLM_CONFIG_KEY = "llm_config"  # should match the key in PlayerConfig dataclass
+GAME_DIR_KEY = "game_dir"
+MODEL_NAME_KEY = "model_name"
+USE_PIPELINE_KEY = "use_pipeline"
+PIPELINE_TASK_KEY = "pipeline_task"
+MAX_NEW_TOKENS_KEY = "max_new_tokens"
+NUM_BEAMS_KEY = "num_beams"
+WORDS_PER_SECOND_WAITING_KEY = "num_words_per_second_to_wait"
+PASS_TURN_TOKEN_KEY = "pass_turn_token"
+USE_TURN_TOKEN_KEY = "use_turn_token"
+ASYNC_TYPE_KEY = "async_type"
+
+INT_CONFIG_KEYS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, WORDS_PER_SECOND_WAITING_KEY]
+BOOL_CONFIG_KEYS = [USE_PIPELINE_KEY]
+
+DEFAULT_LLM_CONFIG = {
+    MODEL_NAME_KEY: DEFAULT_MODEL_NAME,
+    USE_PIPELINE_KEY: False,
+    PIPELINE_TASK_KEY: TEXT_GENERATION_TASK,
+    MAX_NEW_TOKENS_KEY: DEFAULT_MAX_NEW_TOKENS,
+    NUM_BEAMS_KEY: DEFAULT_NUM_BEAMS,
+    WORDS_PER_SECOND_WAITING_KEY: DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT,
+    PASS_TURN_TOKEN_KEY: DEFAULT_PASS_TURN_TOKEN,
+    USE_TURN_TOKEN_KEY: DEFAULT_USE_TURN_TOKEN,
+    ASYNC_TYPE_KEY: DEFAULT_ASYNC_TYPE
+}
+
+LLM_CONFIG_KEYS_OPTIONS = {
+    MODEL_NAME_KEY: MODEL_NAMES,
+    PIPELINE_TASK_KEY: [TEXT_GENERATION_TASK],
+    PASS_TURN_TOKEN_KEY: PASS_TURN_TOKEN_OPTIONS,
+    USE_TURN_TOKEN_KEY: USE_TURN_TOKEN_OPTIONS,
+    ASYNC_TYPE_KEY: ASYNC_TYPES
+}
 
 
 def turn_task_into_prompt(task, message_history):

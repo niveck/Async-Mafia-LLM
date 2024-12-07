@@ -19,7 +19,7 @@ options:
                         path to file with the participating players' real
                         names (before code names assignment), separated by new
                         line breaks ('\n')
-"""
+"""  # TODO update docstring with new flags
 import json
 import argparse
 import random
@@ -27,18 +27,26 @@ import sys
 import time
 from pathlib import Path
 from termcolor import colored
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from game_constants import DEFAULT_CONFIG_DIR, DEFAULT_NUM_PLAYERS, DEFAULT_NUM_MAFIA, \
     MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA, MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA, OPTIONAL_CODE_NAMES, \
-    WARNING_LIMIT_NUM_MAFIA, PLAYERS_KEY_IN_CONFIG
+    WARNING_LIMIT_NUM_MAFIA, PLAYERS_KEY_IN_CONFIG, LLM_LOG_FILE_FORMAT
+from llm_players.llm_constants import INT_CONFIG_KEYS, USE_PIPELINE_KEY, DEFAULT_LLM_CONFIG, \
+    LLM_CONFIG_KEYS_OPTIONS
+
+LLM_CONFIG_KEYS_INDEXED_OPTIONS = {
+    key: {f"{i}": option for (i, option) in enumerate(options)}
+    for key, options in LLM_CONFIG_KEYS_OPTIONS.items()
+}
 
 
 @dataclass
-class PlayerConfig:  # TODO maybe add an LLM sub-config dict
-    name: str  # code name from the game's pool (in constants file)
+class PlayerConfig:
+    name: str  # player's code name from the game's pool (in constants file)
     is_mafia: bool = False
     is_llm: bool = False
     real_name: str = ""
+    llm_config: dict = field(default_factory=dict)
 
 
 def parse_args():
@@ -56,6 +64,10 @@ def parse_args():
     parser.add_argument("-n", "--names_file", default=None,
                         help="path to file with the participating players' real names "
                              "(before code names assignment), separated by new line breaks ('\\n')")
+    parser.add_argument("-c", "--change_llm_config", action="store_true",
+                        help="whether to edit the default LLM configuration")
+    parser.add_argument("-j", "--llm_config_json_path", default=None,
+                        help="optional path to LLM configuration as json (needs to be complete)")
     args = parser.parse_args()
     return args
 
@@ -112,6 +124,42 @@ def handle_num_players(args):
     return player_configs
 
 
+def get_llm_config(llm_numbered_symbol, args):
+    if args.llm_config_json_path is not None:
+        print("Using the LLM configuration in provided path:", args.llm_config_json_path)
+        with open(args.llm_config_json_path, "r") as f:
+            llm_config = json.load(f)
+    else:
+        llm_config = DEFAULT_LLM_CONFIG.copy()  # pay attention it is shallow copy of primitives
+    if args.change_llm_config:
+        config_approved = False
+        index2key = {f"{i}": key for i, key in enumerate(llm_config.keys())}
+        while not config_approved:
+            print(f"Here is the current config for {llm_numbered_symbol}:")
+            for i, key in index2key.keys():
+                print(f"{i}.\t{key}: {llm_config[key]}")
+            index = input("Enter and key index to change its value, "
+                          "or anything else to approve the config: ")
+            if index in index2key:
+                key = index2key[index]
+                if key in INT_CONFIG_KEYS:
+                    llm_config[key] = int(input(f"Enter a new number for {key}: "))
+                elif key in USE_PIPELINE_KEY:
+                    llm_config[key] = eval(input(f"Enter True/False for {key}: ").capitalize())
+                else:
+                    choice = None
+                    while choice not in LLM_CONFIG_KEYS_INDEXED_OPTIONS[key]:
+                        all_options = "\n".join([f"\t{i}: {option}" for (i, option)
+                                                 in LLM_CONFIG_KEYS_INDEXED_OPTIONS[key].items()])
+                        choice = input(f"Choose the wanted option for {key}:\n"
+                                       f"{all_options}\n")
+                    llm_config[key] = LLM_CONFIG_KEYS_INDEXED_OPTIONS[key][choice]
+            else:
+                config_approved = True
+    llm_config[LLM_LOG_FILE_KEY] = LLM_LOG_FILE_FORMAT.format(llm_numbered_symbol)  # TODO remember to touch it in the prepare_game
+    return llm_config
+
+
 def handle_llm_participation(args, player_configs):
     num_llms = args.llm
     print(f"Using {num_llms} LLM player{'' if num_llms == 1 else ''}")
@@ -129,6 +177,7 @@ def handle_llm_participation(args, player_configs):
         for i, llm_player in enumerate(llm_players):
             llm_player.is_llm = True
             llm_player.real_name = f"LLM{i}"
+            llm_player.llm_config = get_llm_config(llm_player.real_name, args)
 
 
 def assign_real_names(args, player_configs):
@@ -138,7 +187,7 @@ def assign_real_names(args, player_configs):
     else:  # split() removes the '\n' and ignores empty lines
         real_names = Path(args.names_file).read_text().split()
     if len(set(real_names)) < len(real_names):
-        raise ValueError("The supplied names file contain repetition of the same name!")
+        raise ValueError("The provided names file contain reoccurrence of the same name!")
     if real_names:
         print("The given real names of participating players:")
         print(",  ".join([f"{i + 1}. {name}" for i, name in enumerate(real_names)]))

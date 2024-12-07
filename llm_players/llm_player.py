@@ -1,22 +1,25 @@
 from abc import ABC, abstractmethod
-from game_constants import get_role_string, DEFAULT_PASS_TURN_TOKEN, DEFAULT_USE_TURN_TOKEN, \
-    GENERAL_SYSTEM_INFO, GAME_START_TIME_FILE
-from llm_players.llm_constants import turn_task_into_prompt
+from game_constants import get_role_string, GAME_START_TIME_FILE
+from llm_players.llm_constants import turn_task_into_prompt, GENERAL_SYSTEM_INFO, \
+    PASS_TURN_TOKEN_KEY, USE_TURN_TOKEN_KEY, WORDS_PER_SECOND_WAITING_KEY
 from llm_players.llm_wrapper import LLMWrapper
+from llm_players.logger import Logger
 
 
 class LLMPlayer(ABC):
 
     TYPE_NAME = None
 
-    def __init__(self, name, is_mafia, game_dir, **kwargs):
+    def __init__(self, name, is_mafia, llm_config, game_dir, **kwargs):
         self.name = name
         self.is_mafia = is_mafia
         self.role = get_role_string(is_mafia)
         self.game_dir = game_dir
-        self.pass_turn_token = kwargs.get("pass_turn_token", DEFAULT_PASS_TURN_TOKEN)
-        self.use_turn_token = kwargs.get("use_turn_token", DEFAULT_USE_TURN_TOKEN)
-        self.llm = LLMWrapper(**kwargs)
+        self.logger = Logger(name, game_dir)
+        self.pass_turn_token = llm_config[PASS_TURN_TOKEN_KEY]
+        self.use_turn_token = llm_config[USE_TURN_TOKEN_KEY]
+        self.num_words_per_second_to_wait = llm_config[WORDS_PER_SECOND_WAITING_KEY]
+        self.llm = LLMWrapper(self.logger, **llm_config)
 
     def get_system_info_message(self):
         system_info = f"Your name is {self.name}. {GENERAL_SYSTEM_INFO}\n" \

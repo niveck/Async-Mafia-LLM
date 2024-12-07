@@ -3,10 +3,9 @@ import torch
 from functools import cache
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoConfig, \
     pipeline
-from game_constants import GENERAL_SYSTEM_INFO  # TODO: make sure this import doesnt lead to cyclic
 from llm_players.llm_constants import DEFAULT_MODEL_NAME, TEXT_GENERATION_TASK, \
     TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, INSTRUCTION_INPUT_RESPONSE_PATTERN, \
-    LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, MAX_NEW_TOKENS, NUM_BEAMS
+    LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, DEFAULT_MAX_NEW_TOKENS, DEFAULT_NUM_BEAMS, GENERAL_SYSTEM_INFO
 
 
 def is_local_path(model_name):
@@ -42,12 +41,13 @@ def cached_pipeline(model_name, task):  # TODO: maybe use device as parameter?
 
 class LLMWrapper:
 
-    def __init__(self, **kwargs):
-        self.model_name = kwargs.get("model_name", DEFAULT_MODEL_NAME)
-        self.use_pipeline = kwargs.get("use_pipeline", False)
-        self.pipeline_task = kwargs.get("pipeline_task", TEXT_GENERATION_TASK)
-        self.max_new_tokens = kwargs.get("max_new_tokens", MAX_NEW_TOKENS)
-        self.num_beams = kwargs.get("num_beams", NUM_BEAMS)
+    def __init__(self, logger, **llm_config):
+        self.logger = logger
+        self.model_name = llm_config[MODEL_NAME_KEY]
+        self.use_pipeline = llm_config[USE_PIPELINE_KEY]
+        self.pipeline_task = llm_config[PIPELINE_TASK_KEY]
+        self.max_new_tokens = llm_config[MAX_NEW_TOKENS_KEY]  # kwargs.get("max_new_tokens", DEFAULT_MAX_NEW_TOKENS)
+        self.num_beams = llm_config[NUM_BEAMS_KEY]  # kwargs.get("num_beams", DEFAULT_NUM_BEAMS)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.prompt_template = self._get_prompt_template()
         if self.use_pipeline:
@@ -122,7 +122,9 @@ class LLMWrapper:
         with torch.inference_mode():
             if self.use_pipeline:
                 messages = self.pipeline_preprocessing(input_text, system_info)
-                outputs = self.pipeline(messages)  # TODO maybe use max_new_tokens=self.max_new_tokens  # TODO maybe also use num_beams?
+                outputs = self.pipeline(messages,
+                                        max_new_tokens=self.max_new_tokens,
+                                        num_beams=self.num_beams)
                 final_output = outputs[0][TASK2OUTPUT_FORMAT[self.pipeline_task]][-1]
             else:
                 prompt = self.direct_preprocessing(input_text, system_info)
@@ -131,8 +133,7 @@ class LLMWrapper:
                 outputs = self.model.generate(**inputs,
                                               # max_length=self.max_source_length,
                                               max_new_tokens=self.max_new_tokens,
-                                              num_beams=self.num_beams,
-                                              )
+                                              num_beams=self.num_beams)
                 decoded_output = self.tokenizer.decode(outputs[0])
                 final_output = self.direct_postprocessing(decoded_output)
         return final_output.strip()

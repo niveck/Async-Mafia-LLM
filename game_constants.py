@@ -29,6 +29,7 @@ PERSONAL_STATUS_FILE_FORMAT = "{}_status.txt"
 # files that hosts read from and players write to
 PERSONAL_CHAT_FILE_FORMAT = "{}_chat.txt"
 PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
+LLM_LOG_FILE_FORMAT = "{}_log.txt"
 
 # constant strings for info files
 NIGHTTIME = "Nighttime"
@@ -74,12 +75,6 @@ CUTTING_TO_VOTE_MESSAGE = "There is only one mafia member left, so no need for d
                           " - cutting straight to voting!"
 DAYTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(DAYTIME)
 NIGHTTIME_VOTING_TIME_MESSAGE = VOTING_TIME_MESSAGE_FORMAT.format(NIGHTTIME)
-
-# LLM messages and constants
-DEFAULT_PASS_TURN_TOKEN = "<wait>"
-DEFAULT_USE_TURN_TOKEN = "<send>"
-GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
-                      f"The rules of the game: {RULES_OF_THE_GAME}"
 
 # new configuration preparation constants
 PLAYERS_KEY_IN_CONFIG = "players"
@@ -141,7 +136,7 @@ def get_game_dir_from_argv():
     args = parser.parse_args()
     game_dir = Path(DIRS_PREFIX) / args.game_id
     if not game_dir.exists():
-        raise ValueError(f"The supplied game ID {args.game_id} doesn't belong to a configured game")
+        raise ValueError(f"The provided game ID {args.game_id} doesn't belong to a configured game")
     return game_dir
 
 
