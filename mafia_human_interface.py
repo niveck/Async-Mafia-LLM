@@ -1,6 +1,7 @@
 # TODO: change file name to player_merged_chat_and_input.py after committing (so git will remember the history of the file)
 from threading import Thread
 from termcolor import colored
+from game_constants import get_game_dir_from_argv
 from player_chat import read_game_text_loop, welcome_player, game_over_message
 from player_input import write_text_to_game_loop
 
@@ -12,19 +13,20 @@ THREADING_WARNING_MESSAGE = "Pay attention! This interface allows you to read an
 WARNING_COLOR = "light_red"
 
 
-def game_read_and_write_loop(name, is_mafia):
-    write_thread = Thread(target=write_text_to_game_loop, args=(name, is_mafia))
+def game_read_and_write_loop(name, is_mafia, game_dir):
+    write_thread = Thread(target=write_text_to_game_loop, args=(name, is_mafia, game_dir))
     # daemon: writing in the background, so it can stop when eliminated and still allow reading
     write_thread.daemon = True
     write_thread.start()
-    read_game_text_loop(is_mafia)
+    read_game_text_loop(is_mafia, game_dir)
 
 
 def main():
+    game_dir = get_game_dir_from_argv()
     print(colored(THREADING_WARNING_MESSAGE, WARNING_COLOR))
-    name, is_mafia = welcome_player()
-    game_read_and_write_loop(name, is_mafia)
-    game_over_message()
+    name, is_mafia = welcome_player(game_dir)
+    game_read_and_write_loop(name, is_mafia, game_dir)
+    game_over_message(game_dir)
 
 
 if __name__ == '__main__':

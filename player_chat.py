@@ -2,14 +2,9 @@
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_game_over, is_time_to_vote, all_players_joined, get_is_mafia
 
-# global variable
-game_dir = Path()  # will be updated in welcome_player
 
-
-def welcome_player():
-    global game_dir
-    game_dir = get_game_dir_from_argv()
-    print(colored(WELCOME_MESSAGE, MANAGER_COLOR))
+def welcome_player(game_dir):
+    print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
     print(colored(RULES_OF_THE_GAME, MANAGER_COLOR))
     real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
     real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
@@ -17,7 +12,7 @@ def welcome_player():
     real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
     name = real_names_to_codenames[real_name]
     print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR))
-    print(colored(name, MANAGER_COLOR, attrs=["bold"]))
+    print(colored(name, MANAGER_COLOR, attrs=["bold"]))  # TODO make a different color for more bolding
     is_mafia = get_is_mafia(name, game_dir)
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
@@ -45,7 +40,7 @@ def ask_player_to_vote():
     print(colored(VOTE_INSTRUCTION_MESSAGE, MANAGER_COLOR))
 
 
-def read_game_text_loop(is_mafia):
+def read_game_text_loop(is_mafia, game_dir):
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):
         num_read_lines_manager += display_lines_from_file(
@@ -62,7 +57,7 @@ def read_game_text_loop(is_mafia):
                 continue  # wait for voting time to end when all players have voted
 
 
-def game_over_message():
+def game_over_message(game_dir):
     who_wins = (game_dir / WHO_WINS_FILE).read_text().strip()
     print(colored(who_wins, MANAGER_COLOR))
     mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()  # removes the "\n"
@@ -71,9 +66,10 @@ def game_over_message():
 
 
 def main():
-    _, is_mafia = welcome_player()
-    read_game_text_loop(is_mafia)
-    game_over_message()
+    game_dir = get_game_dir_from_argv()
+    _, is_mafia = welcome_player(game_dir)
+    read_game_text_loop(is_mafia, game_dir)
+    game_over_message(game_dir)
 
 
 if __name__ == '__main__':
