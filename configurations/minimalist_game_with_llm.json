@@ -1,35 +1,51 @@
 {
     "players": [
         {
-            "name": "Dakota",
+            "name": "Peyton",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Gabi"
+            "real_name": "Gabi",
+            "llm_config": {}
         },
         {
-            "name": "Jamie",
-            "is_mafia": false,
-            "is_llm": true,
-            "real_name": "LLM0"
-        },
-        {
-            "name": "River",
+            "name": "Harley",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Uri"
+            "real_name": "Uri",
+            "llm_config": {}
         },
         {
-            "name": "Winter",
-            "is_mafia": false,
-            "is_llm": false,
-            "real_name": "Niv1"
-        },
-        {
-            "name": "Skylar",
+            "name": "Lee",
             "is_mafia": true,
+            "is_llm": true,
+            "real_name": "LLM0",
+            "llm_config": {
+                "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+                "use_pipeline": false,
+                "pipeline_task": "text-generation",
+                "max_new_tokens": 100,
+                "num_beams": 4,
+                "num_words_per_second_to_wait": 3,
+                "pass_turn_token": "<wait>",
+                "use_turn_token": "<send>",
+                "async_type": "schedule_then_generate"
+            }
+        },
+        {
+            "name": "Morgan",
+            "is_mafia": false,
             "is_llm": false,
-            "real_name": "Niv2"
+            "real_name": "Niv1",
+            "llm_config": {}
+        },
+        {
+            "name": "Riley",
+            "is_mafia": false,
+            "is_llm": false,
+            "real_name": "Niv2",
+            "llm_config": {}
         }
     ],
-    "notes": ""
+    "notes": "",
+    "preparation_command": "C:\\Users\\nive\\OneDrive - Mobileye\\Desktop\\University\\Async-Mafia-LLM\\prepare_config.py -o minimalist_game_with_llm.json -p 5"
 }

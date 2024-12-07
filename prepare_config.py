@@ -1,6 +1,7 @@
 """
-usage: prepare_config.py [-h] [-o OUTPUT] [-p PLAYERS] [-m MAFIA] [-l {0,1}]
-                         [-b] [-n NAMES_FILE]
+usage: prepare_config.py [-h] [-o OUTPUT] [-p PLAYERS] [-m MAFIA]
+                         [-l {0,1}] [-b] [-n NAMES_FILE] [-c]
+                         [-j LLM_CONFIG_JSON_PATH]
 
 options:
   -h, --help            show this help message and exit
@@ -17,8 +18,13 @@ options:
                         mafia)
   -n NAMES_FILE, --names_file NAMES_FILE
                         path to file with the participating players' real
-                        names (before code names assignment), separated by new
-                        line breaks ('\n')
+                        names (before code names assignment), separated by
+                        new line breaks ('\\n')
+  -c, --change_llm_config
+                        whether to edit the default LLM configuration
+  -j LLM_CONFIG_JSON_PATH, --llm_config_json_path LLM_CONFIG_JSON_PATH
+                        optional path to LLM configuration as json (needs
+                        to be complete)
 """  # TODO update docstring with new flags
 import json
 import argparse
@@ -156,7 +162,6 @@ def get_llm_config(llm_numbered_symbol, args):
                     llm_config[key] = LLM_CONFIG_KEYS_INDEXED_OPTIONS[key][choice]
             else:
                 config_approved = True
-    llm_config[LLM_LOG_FILE_KEY] = LLM_LOG_FILE_FORMAT.format(llm_numbered_symbol)  # TODO remember to touch it in the prepare_game
     return llm_config
 
 
