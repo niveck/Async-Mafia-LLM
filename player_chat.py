@@ -26,7 +26,7 @@ def welcome_player(game_dir):
     return name, is_mafia  # name is used only in the joint read-and-write interface (with threads)
 
 
-def display_lines_from_file(file_name, num_read_lines, display_color):
+def display_lines_from_file(game_dir, file_name, num_read_lines, display_color):
     with open(game_dir / file_name, "r") as f:
         lines = f.readlines()[num_read_lines:]
     if len(lines) > 0:  # TODO if print() is deleted then remove this if!
@@ -44,13 +44,13 @@ def read_game_text_loop(is_mafia, game_dir):
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):
         num_read_lines_manager += display_lines_from_file(
-            PUBLIC_MANAGER_CHAT_FILE, num_read_lines_manager, MANAGER_COLOR)
+            game_dir, PUBLIC_MANAGER_CHAT_FILE, num_read_lines_manager, MANAGER_COLOR)
         # only current phase file will have new messages, so no need to run expensive is_nighttime()
         num_read_lines_daytime += display_lines_from_file(
-            PUBLIC_DAYTIME_CHAT_FILE, num_read_lines_daytime, DAYTIME_COLOR)
+            game_dir, PUBLIC_DAYTIME_CHAT_FILE, num_read_lines_daytime, DAYTIME_COLOR)
         if is_mafia:  # only mafia can see what happens during nighttime
             num_read_lines_nighttime += display_lines_from_file(
-                PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
+                game_dir, PUBLIC_NIGHTTIME_CHAT_FILE, num_read_lines_nighttime, NIGHTTIME_COLOR)
         if is_time_to_vote(game_dir):
             ask_player_to_vote()
             while is_time_to_vote(game_dir):
