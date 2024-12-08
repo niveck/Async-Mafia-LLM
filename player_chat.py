@@ -6,6 +6,7 @@ from game_status_checks import is_game_over, is_time_to_vote, all_players_joined
 
 def welcome_player(game_dir):
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
+    # TODO: add underline title of rules of the game
     print(colored(RULES_OF_THE_GAME + "\n", MANAGER_COLOR))
     real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
     real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
@@ -44,7 +45,7 @@ def ask_player_to_vote():
 def ask_player_to_vote_only_once(already_asked, game_dir, is_mafia):
     if is_time_to_vote(game_dir):
         # leaving the is_nighttime check to the end because it's expensive and might not be needed
-        if not already_asked and is_mafia or not is_nighttime(game_dir):
+        if not already_asked and (is_mafia or not is_nighttime(game_dir)):
             ask_player_to_vote()
             already_asked = True
     else:

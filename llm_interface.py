@@ -7,6 +7,9 @@ from llm_players.llm_constants import GAME_DIR_KEY
 
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
+LLM_PLAYER_LOADED_MESSAGE = "The LLM PLayer was loaded successfully, " \
+                            "now waiting for all other players to join..."
+ALL_PLAYERS_JOINED_MESSAGE = "All players have joined, now the game can start."
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
 GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
 ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
@@ -32,7 +35,9 @@ def get_llm_player():
         player_config = [player for player in llm_players_configs
                          if player["name"] == player_name][0]
     player_config[GAME_DIR_KEY] = game_dir  # TODO maybe GAME_DIR_KEY is unnecessary like "name"
-    return llm_player_factory(player_config)
+    llm_player = llm_player_factory(player_config)
+    (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(llm_player.name)).write_text(JOINED)
+    return llm_player
 
 
 def read_messages_from_file(message_history, file_name, num_read_lines):
@@ -82,8 +87,10 @@ def end_game():
 
 def main():
     player = get_llm_player()
+    print(colored(LLM_PLAYER_LOADED_MESSAGE, MANAGER_COLOR))
     while not all_players_joined(game_dir):
         continue
+    print(colored(ALL_PLAYERS_JOINED_MESSAGE, MANAGER_COLOR))
     message_history = []
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):
