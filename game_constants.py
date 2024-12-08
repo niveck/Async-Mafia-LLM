@@ -63,7 +63,7 @@ REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
 # game constants
 NIGHTTIME_TIME_LIMIT_MINUTES = 1
 NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
-DAYTIME_TIME_LIMIT_MINUTES = 1  # 3  # TODO return to 3! TODO: actually check times in original paper
+DAYTIME_TIME_LIMIT_MINUTES = 3  # TODO: change it to be in the config so I can change and control it
 DAYTIME_TIME_LIMIT_SECONDS = int(DAYTIME_TIME_LIMIT_MINUTES * 60)
 DAYTIME_BEGINNING_MESSAGE = f"Now it's Daytime for {DAYTIME_TIME_LIMIT_MINUTES} minutes, " \
                             f"everyone can communicate and see messages and votes."
