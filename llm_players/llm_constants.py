@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from game_constants import get_current_timestamp, RULES_OF_THE_GAME
 
 MODEL_NAMES = [

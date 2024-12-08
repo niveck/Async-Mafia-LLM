@@ -3,9 +3,9 @@ import torch
 from functools import cache
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoConfig, \
     pipeline
-from llm_players.llm_constants import DEFAULT_MODEL_NAME, TEXT_GENERATION_TASK, \
-    TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, INSTRUCTION_INPUT_RESPONSE_PATTERN, \
-    LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, DEFAULT_MAX_NEW_TOKENS, DEFAULT_NUM_BEAMS, GENERAL_SYSTEM_INFO
+from llm_players.llm_constants import TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, \
+    INSTRUCTION_INPUT_RESPONSE_PATTERN, LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, NUM_BEAMS_KEY, \
+    MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO
 
 
 def is_local_path(model_name):
@@ -46,8 +46,8 @@ class LLMWrapper:
         self.model_name = llm_config[MODEL_NAME_KEY]
         self.use_pipeline = llm_config[USE_PIPELINE_KEY]
         self.pipeline_task = llm_config[PIPELINE_TASK_KEY]
-        self.max_new_tokens = llm_config[MAX_NEW_TOKENS_KEY]  # kwargs.get("max_new_tokens", DEFAULT_MAX_NEW_TOKENS)
-        self.num_beams = llm_config[NUM_BEAMS_KEY]  # kwargs.get("num_beams", DEFAULT_NUM_BEAMS)
+        self.max_new_tokens = llm_config[MAX_NEW_TOKENS_KEY]
+        self.num_beams = llm_config[NUM_BEAMS_KEY]
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.prompt_template = self._get_prompt_template()
         if self.use_pipeline:

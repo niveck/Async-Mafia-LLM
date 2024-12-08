@@ -51,7 +51,6 @@ def wait_writing_time(player, message):
 def eliminate(player):
     print(colored(ELIMINATED_MESSAGE, OPERATOR_COLOR))
     # TODO maybe log how much time it lasted in the game, how many players were left when it was voted out and maybe how many time it was voted for
-    pass
 
 
 def get_vote_from_llm(player, message_history):
