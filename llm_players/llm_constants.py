@@ -39,7 +39,7 @@ DEFAULT_ASYNC_TYPE = ASYNC_TYPES[0]
 
 # config keys:
 LLM_CONFIG_KEY = "llm_config"  # should match the key in PlayerConfig dataclass
-GAME_DIR_KEY = "game_dir"
+GAME_DIR_KEY = "game_dir"  # should match key word in LLMPlayer
 MODEL_NAME_KEY = "model_name"
 USE_PIPELINE_KEY = "use_pipeline"
 PIPELINE_TASK_KEY = "pipeline_task"
