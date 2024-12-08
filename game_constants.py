@@ -45,13 +45,13 @@ MAFIA_WINS_MESSAGE = "Mafia wins!"
 BYSTANDERS_WIN_MESSAGE = "Bystanders win!"
 GAME_MANAGER_NAME = "Game-Manager"
 RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, either mafia or " \
-                    "bystander. Every round starts with Nighttime phase, where only mafia " \
-                    "players interact and vote to decide which bystander player they want to " \
-                    "eliminate (bystanders aren't exposed to the mafia identities or " \
-                    "interaction). Then it moves to Daytime phase, where all remaining players " \
-                    "discuss together who they think the mafia players are and vote out another " \
-                    "player. The mafia's goal is to outnumber the bystanders, and the " \
-                    "bystanders' goal it to vote out all real mafia."
+                    "bystander. Every round starts with Daytime phase, where all players " \
+                    "discuss together who they think the mafia players might be, and vote out " \
+                    "one player. Then it moves to Nighttime phase, where only mafia players " \
+                    "interact and vote to decide which bystander player they want to eliminate " \
+                    "(bystanders aren't exposed to the mafia identities or interaction). The " \
+                    "mafia's goal is to outnumber the bystanders, and the bystanders' goal is to " \
+                    "vote out all real mafia."
 
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
