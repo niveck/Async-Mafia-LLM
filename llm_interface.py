@@ -10,6 +10,7 @@ OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of t
 LLM_PLAYER_LOADED_MESSAGE = "The LLM PLayer was loaded successfully, " \
                             "now waiting for all other players to join..."
 ALL_PLAYERS_JOINED_MESSAGE = "All players have joined, now the game can start."
+LLM_VOTE_MESSAGE_FORMAT = "The LLM player has voted for: {}"
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
 GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
 ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
@@ -65,6 +66,7 @@ def get_vote_from_llm(player, message_history):
     for name in candidate_vote_names:
         if name in voting_message:  # update game manger
             (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).write_text(name)
+            print(colored(LLM_VOTE_MESSAGE_FORMAT.format(name), OPERATOR_COLOR))
             return
     # TODO: add log that if didn't return, then voting message didn't have a possible name
 
@@ -87,10 +89,10 @@ def end_game():
 
 def main():
     player = get_llm_player()
-    print(colored(LLM_PLAYER_LOADED_MESSAGE, MANAGER_COLOR))
+    print(colored(LLM_PLAYER_LOADED_MESSAGE, OPERATOR_COLOR))
     while not all_players_joined(game_dir):
         continue
-    print(colored(ALL_PLAYERS_JOINED_MESSAGE, MANAGER_COLOR))
+    print(colored(ALL_PLAYERS_JOINED_MESSAGE, OPERATOR_COLOR))
     message_history = []
     num_read_lines_manager = num_read_lines_daytime = num_read_lines_nighttime = 0
     while not is_game_over(game_dir):

@@ -7,6 +7,8 @@ from llm_players.llm_constants import TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PRO
     INSTRUCTION_INPUT_RESPONSE_PATTERN, LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, NUM_BEAMS_KEY, \
     MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO
 
+CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
+
 
 def is_local_path(model_name):
     return os.path.isdir(model_name)  # maybe should come up with better mechanism
@@ -17,12 +19,12 @@ def cached_model(model_name):
     if is_local_path(model_name):
         config = AutoConfig.from_pretrained(model_name)
         return AutoModelForSeq2SeqLM.from_pretrained(model_name, config=config)
-    return AutoModelForCausalLM.from_pretrained(model_name)
+    return AutoModelForCausalLM.from_pretrained(model_name, cache_dir=CACHE_DIR)
 
 
 @cache
 def cached_tokenizer(model_name):
-    return AutoTokenizer.from_pretrained(model_name)
+    return AutoTokenizer.from_pretrained(model_name, cache_dir=CACHE_DIR)
 
 
 @cache
