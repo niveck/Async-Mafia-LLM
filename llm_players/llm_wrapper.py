@@ -114,8 +114,11 @@ class LLMWrapper:
         elif self.prompt_template == LLAMA3_PATTERN:
             assistant_prefix = "<|start_header_id|>assistant<|end_header_id|>"
             if assistant_prefix in decoded_output:
-                decoded_output = decoded_output.split(assistant_prefix)[1]
-            return decoded_output.split("<|eot_id|>")[0].split("<|end_of_text|>")[0].strip()
+                decoded_output = decoded_output.split(assistant_prefix)[1].strip()
+            decoded_output = decoded_output.split("<|eot_id|>")[0].split("<|end_of_text|>")[0].strip()
+            if decoded_output and decoded_output[0] == ":":
+                decoded_output = decoded_output[1:]
+            return decoded_output
         # elif  # TODO: add an option for the fine-tuned model based on its training format!
         else:
             raise NotImplementedError("Missing output template for used model")

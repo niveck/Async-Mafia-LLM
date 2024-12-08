@@ -22,7 +22,7 @@ def collect_vote(name, game_dir):
     remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
     voted_name = get_player_name_from_user(remaining_player_names,
                                            GET_VOTED_NAME_MESSAGE_FORMAT.format(name))
-    (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name)
+    (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name + "\n")  # '\n' for flush
 
 
 def write_text_to_game_loop(name, is_mafia, game_dir):

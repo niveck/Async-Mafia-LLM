@@ -46,5 +46,6 @@ class GenerateThenSchedulePlayer(LLMPlayer):
 
     def create_generation_prompt(self, message_history):  # TODO this is duplicate from schedule_then_generate... consider extracting? constant / parent class
         task = f"Add a short message to the game's chat. " \
-               f"Your message should only be one sentence! "
+               f"Your message should only be one sentence! " \
+               f"Don't add a message that you've already added (in the chat history)!"
         return turn_task_into_prompt(task, message_history)
