@@ -100,7 +100,7 @@ NIGHTTIME_COLOR = "red"
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"
-GET_CHAT_INPUT_MESSAGE = f"Enter a message to the public chat: "
+GET_CHAT_INPUT_MESSAGE = ">"  # f"Enter a message to the public chat: "
 VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
                            f"Enter '{VOTE_FLAG}' as your input to vote..."
 GET_VOTED_NAME_MESSAGE_FORMAT = "It's time to make your vote, {}!\nEnter your vote's number:"

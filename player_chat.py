@@ -46,7 +46,7 @@ def ask_player_to_vote_only_once(already_asked, game_dir, is_mafia):
     if is_time_to_vote(game_dir):
         # leaving the is_nighttime check to the end because it's expensive and might not be needed
         if not already_asked and (is_mafia or not is_nighttime(game_dir)):
-            # ask_player_to_vote()  # TODO fix this!!!!
+            ask_player_to_vote()
             already_asked = True
     else:
         already_asked = False
