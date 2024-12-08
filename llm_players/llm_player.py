@@ -42,4 +42,9 @@ class LLMPlayer(ABC):
                "eliminate? Reply with only one name from the list, and nothing but the name: "
         task += ", ".join(candidate_vote_names)
         prompt = turn_task_into_prompt(task, message_history)
-        return self.llm.generate(prompt, self.get_system_info_message())
+        system_info = self.get_system_info_message()
+        self.logger.log("prompt for get_vote", prompt)
+        self.logger.log("system_info for get_vote", system_info)
+        vote = self.llm.generate(prompt, system_info)
+        self.logger.log("generated vote in get_vote", vote)
+        return vote

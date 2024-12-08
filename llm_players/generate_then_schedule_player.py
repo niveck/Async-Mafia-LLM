@@ -17,13 +17,19 @@ class GenerateThenSchedulePlayer(LLMPlayer):
         # potential_message and message_history are combined because of parent class signature
         potential_message = potential_message_and_message_history[0]
         message_history = potential_message_and_message_history[1:]
+        self.logger.log("potential_message in should_generate_message", potential_message)
+        self.logger.log("message_history in should_generate_message", message_history)
         prompt = self.create_scheduling_prompt(potential_message, message_history)
+        self.logger.log("prompt in should_generate_message", prompt)
         decision = self.scheduler.generate(prompt, self.get_system_info_message())
+        self.logger.log("decision in should_generate_message", decision)
         return bool(decision) and self.pass_turn_token not in decision
 
     def generate_message(self, message_history):
         prompt = self.create_generation_prompt(message_history)
+        self.logger.log("prompt in generate_message", prompt)
         potential_message = self.llm.generate(prompt, self.get_system_info_message())
+        self.logger.log("potential_message in generate_message", potential_message)
         if self.should_generate_message([potential_message] + message_history):
             return potential_message
         else:

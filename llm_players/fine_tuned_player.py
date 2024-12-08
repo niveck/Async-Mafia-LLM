@@ -4,7 +4,7 @@ from llm_players.llm_player import LLMPlayer
 DEFAULT_MODEL_PATH = ""  # TODO add the model path for my fine tuned mafia model
 
 
-class FineTunedPlayer(LLMPlayer):
+class FineTunedPlayer(LLMPlayer):  # TODO: use self.logger
 
     TYPE_NAME = FINE_TUNED_TYPE
 

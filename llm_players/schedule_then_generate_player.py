@@ -15,12 +15,15 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
 
     def should_generate_message(self, message_history):
         prompt = self.create_scheduling_prompt(message_history)
+        self.logger.log("prompt in should_generate_message", prompt)
         decision = self.scheduler.generate(prompt, self.get_system_info_message())
+        self.logger.log("decision in should_generate_message", decision)
         return bool(decision) and self.pass_turn_token not in decision
 
     def generate_message(self, message_history):
         if self.should_generate_message(message_history):
             prompt = self.create_generation_prompt(message_history)
+            self.logger.log("prompt in generate_message", prompt)
             return self.llm.generate(prompt, self.get_system_info_message())
         else:
             return ""

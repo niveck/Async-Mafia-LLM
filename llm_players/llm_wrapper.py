@@ -127,12 +127,15 @@ class LLMWrapper:
         with torch.inference_mode():
             if self.use_pipeline:
                 messages = self.pipeline_preprocessing(input_text, system_info)
+                self.logger.log("messages in generate with self.use_pipeline", messages)
                 outputs = self.pipeline(messages,
                                         max_new_tokens=self.max_new_tokens,
                                         num_beams=self.num_beams)
+                self.logger.log("outputs in generate with self.use_pipeline", outputs)
                 final_output = outputs[0][TASK2OUTPUT_FORMAT[self.pipeline_task]][-1]
             else:
                 prompt = self.direct_preprocessing(input_text, system_info)
+                self.logger.log("prompt in generate directly", prompt)
                 inputs = self.tokenizer(prompt, return_tensors="pt")
                 inputs = {key: value.to(self.device) for key, value in inputs.items()}
                 outputs = self.model.generate(**inputs,
@@ -140,5 +143,6 @@ class LLMWrapper:
                                               max_new_tokens=self.max_new_tokens,
                                               num_beams=self.num_beams)
                 decoded_output = self.tokenizer.decode(outputs[0])
+                self.logger.log("decoded_output in generate directly", decoded_output)
                 final_output = self.direct_postprocessing(decoded_output)
         return final_output.strip()
