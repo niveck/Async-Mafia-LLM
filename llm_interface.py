@@ -11,6 +11,7 @@ LLM_PLAYER_LOADED_MESSAGE = "The LLM PLayer was loaded successfully, " \
                             "now waiting for all other players to join..."
 ALL_PLAYERS_JOINED_MESSAGE = "All players have joined, now the game can start."
 LLM_VOTE_MESSAGE_FORMAT = "The LLM player has voted for: {}"
+MODEL_VOTED_INVALIDLY_LOG = "The LLM player has generated a message with no valid vote..."
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
 GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
 ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
@@ -68,6 +69,9 @@ def get_vote_from_llm(player, message_history):
             (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).write_text(name + "\n")  # '\n' for flush
             print(colored(LLM_VOTE_MESSAGE_FORMAT.format(name), OPERATOR_COLOR))
             return
+    # if didn't return: no name was in voting_message
+    player.logger.log(MODEL_VOTED_INVALIDLY_LOG, voting_message)
+    print(colored(MODEL_VOTED_INVALIDLY_LOG + ": " + voting_message, OPERATOR_COLOR))
     # TODO: add log that if didn't return, then voting message didn't have a possible name
 
 
