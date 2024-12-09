@@ -1,7 +1,7 @@
 """
-usage: prepare_config.py [-h] [-o OUTPUT] [-p PLAYERS] [-m MAFIA]
-                         [-l {0,1}] [-b] [-n NAMES_FILE] [-c]
-                         [-j LLM_CONFIG_JSON_PATH]
+usage: prepare_config.py [-h] [-o OUTPUT] [-p PLAYERS] [-m MAFIA] [-l {0,1}]
+                         [-b] [-n NAMES_FILE] [-c] [-j LLM_CONFIG_JSON_PATH]
+                         [-dt DAYTIME_MINUTES] [-nt NIGHTTIME_MINUTES]
 
 options:
   -h, --help            show this help message and exit
@@ -12,19 +12,23 @@ options:
   -m MAFIA, --mafia MAFIA
                         number of mafia players in game
   -l {0,1}, --llm {0,1}
-                        number of LLM players in game, currently supports
-                        maximum 1
-  -b, --bystander       whether the LLM player can only be bystander (not
-                        mafia)
+                        number of LLM players in game, currently supports maximum 1
+  -b, --bystander       whether the LLM player can only be bystander (not mafia)
   -n NAMES_FILE, --names_file NAMES_FILE
                         path to file with the participating players' real
-                        names (before code names assignment), separated by
-                        new line breaks ('\\n')
+                        names (before code names assignment), separated by new
+                        line breaks ('\\n')
   -c, --change_llm_config
                         whether to edit the default LLM configuration
   -j LLM_CONFIG_JSON_PATH, --llm_config_json_path LLM_CONFIG_JSON_PATH
-                        optional path to LLM configuration as json (needs
-                        to be complete)
+                        optional path to LLM configuration as json (has to be complete)
+  -dt DAYTIME_MINUTES, --daytime_minutes DAYTIME_MINUTES
+                        number of minutes for Daytime phase
+  -nt NIGHTTIME_MINUTES, --nighttime_minutes NIGHTTIME_MINUTES
+                        number of minutes for Nighttime phase
+
+Process finished with exit code 0
+
 """  # TODO update docstring with new flags
 import json
 import argparse
@@ -36,7 +40,8 @@ from termcolor import colored
 from dataclasses import dataclass, asdict, field
 from game_constants import DEFAULT_CONFIG_DIR, DEFAULT_NUM_PLAYERS, DEFAULT_NUM_MAFIA, \
     MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA, MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA, OPTIONAL_CODE_NAMES, \
-    WARNING_LIMIT_NUM_MAFIA, PLAYERS_KEY_IN_CONFIG, LLM_LOG_FILE_FORMAT
+    WARNING_LIMIT_NUM_MAFIA, PLAYERS_KEY_IN_CONFIG, DEFAULT_DAYTIME_MINUTES, \
+    DEFAULT_NIGHTTIME_MINUTES, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY
 from llm_players.llm_constants import INT_CONFIG_KEYS, USE_PIPELINE_KEY, DEFAULT_LLM_CONFIG, \
     LLM_CONFIG_KEYS_OPTIONS
 
@@ -73,7 +78,11 @@ def parse_args():
     parser.add_argument("-c", "--change_llm_config", action="store_true",
                         help="whether to edit the default LLM configuration")
     parser.add_argument("-j", "--llm_config_json_path", default=None,
-                        help="optional path to LLM configuration as json (needs to be complete)")
+                        help="optional path to LLM configuration as json (has to be complete)")
+    parser.add_argument("-dt", "--daytime_minutes", type=int, default=DEFAULT_DAYTIME_MINUTES,
+                        help="number of minutes for Daytime phase")
+    parser.add_argument("-nt", "--nighttime_minutes", type=int, default=DEFAULT_NIGHTTIME_MINUTES,
+                        help="number of minutes for Nighttime phase")
     args = parser.parse_args()
     return args
 
@@ -214,8 +223,10 @@ def assign_real_names(args, player_configs):
         human_player.real_name = real_name
 
 
-def save_config(output_file, player_configs):
+def save_config(args, output_file, player_configs):
     config = {PLAYERS_KEY_IN_CONFIG: [asdict(player_config) for player_config in player_configs],
+              DAYTIME_MINUTES_KEY: args.daytime_minutes,
+              NIGHTTIME_MINUTES_KEY: args.nighttime_minutes,
               "notes": input("Add notes to this config: [or enter to skip] ").strip(),
               "preparation_command": " ".join(sys.argv)}
     with open(output_file, "w") as f:
@@ -230,7 +241,7 @@ def main():
     player_configs = handle_num_players(args)
     handle_llm_participation(args, player_configs)
     assign_real_names(args, player_configs)
-    save_config(output_file, player_configs)
+    save_config(args, output_file, player_configs)
 
 
 if __name__ == '__main__':

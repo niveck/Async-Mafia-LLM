@@ -41,9 +41,13 @@ class Player:
         self.personal_status_file.write_text(VOTED_OUT)
 
 
-def get_players():
+def get_config():
     with open(game_dir / GAME_CONFIG_FILE, "r") as f:
         config = json.load(f)
+    return config
+
+
+def get_players(config):
     return [Player(**player_config) for player_config in config[PLAYERS_KEY_IN_CONFIG]]
 
 
@@ -65,6 +69,14 @@ def is_game_over(players):
     mafia_players = [player for player in players if player.is_mafia]
     bystanders = [player for player in players if not player.is_mafia]
     return is_win_by_bystanders(mafia_players) or is_win_by_mafia(mafia_players, bystanders)  # TODO debug - for some reason this didn't return true when there were 1 mafia and 1 bystander
+
+
+def get_daytime_seconds(config):
+    return minutes_to_seconds(config[DAYTIME_MINUTES_KEY])
+
+
+def get_nighttime_seconds(config):
+    return minutes_to_seconds(config[NIGHTTIME_MINUTES_KEY])
 
 
 def run_chat_round_between_players(players, chat_room):
@@ -138,28 +150,20 @@ def run_phase(players, voting_players, optional_votes_players, public_chat_file,
     voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players)
 
 
-def announce_nighttime():
-    game_manager_announcement(NIGHTTIME_BEGINNING_MESSAGE)
-
-
-def run_nighttime(players):
+def run_nighttime(players, nighttime_seconds):
     (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
     mafia_players = [player for player in players if player.is_mafia]
     bystanders = [player for player in players if not player.is_mafia]
-    announce_nighttime()
+    game_manager_announcement(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_seconds))
     run_phase(players, mafia_players, bystanders, game_dir / PUBLIC_NIGHTTIME_CHAT_FILE,
-              NIGHTTIME_TIME_LIMIT_SECONDS, NIGHTTIME)
+              nighttime_seconds, NIGHTTIME)
 
 
-def announce_daytime():
-    game_manager_announcement(DAYTIME_BEGINNING_MESSAGE)
-
-
-def run_daytime(players):
+def run_daytime(players, daytime_seconds):
     (game_dir / PHASE_STATUS_FILE).write_text(DAYTIME)
-    announce_daytime()
+    game_manager_announcement(DAYTIME_START_MESSAGE_FORMAT.format(daytime_seconds))
     run_phase(players, players, players, game_dir / PUBLIC_DAYTIME_CHAT_FILE,
-              DAYTIME_TIME_LIMIT_SECONDS, DAYTIME)
+              daytime_seconds, DAYTIME)
 
 
 def wait_for_players(players):
@@ -185,11 +189,12 @@ def end_game():
 def main():
     global game_dir
     game_dir = get_game_dir_from_argv()
-    players = get_players()
+    config = get_config()
+    players = get_players(config)
     wait_for_players(players)
     while not is_game_over(players):
-        run_daytime(players)
-        run_nighttime(players)
+        run_daytime(players, get_daytime_seconds(config))
+        run_nighttime(players, get_nighttime_seconds(config))
     end_game()
 
 

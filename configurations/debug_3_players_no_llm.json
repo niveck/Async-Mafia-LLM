@@ -19,6 +19,8 @@
             "real_name": "Niv3"
         }
     ],
+    "daytime_minutes": 1,
+    "nighttime_minutes": 1,
     "notes": "",
     "preparation_command": "None (manual)"
 }

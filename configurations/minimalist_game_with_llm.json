@@ -46,6 +46,8 @@
             "llm_config": {}
         }
     ],
+    "daytime_minutes": 3,
+    "nighttime_minutes": 1,
     "notes": "",
     "preparation_command": "C:\\Users\\nive\\OneDrive - Mobileye\\Desktop\\University\\Async-Mafia-LLM\\prepare_config.py -o minimalist_game_with_llm.json -p 5"
 }

@@ -61,14 +61,10 @@ VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
 REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
 
 # game constants
-NIGHTTIME_TIME_LIMIT_MINUTES = 1
-NIGHTTIME_TIME_LIMIT_SECONDS = int(NIGHTTIME_TIME_LIMIT_MINUTES * 60)
-DAYTIME_TIME_LIMIT_MINUTES = 3  # TODO: change it to be in the config so I can change and control it
-DAYTIME_TIME_LIMIT_SECONDS = int(DAYTIME_TIME_LIMIT_MINUTES * 60)
-DAYTIME_BEGINNING_MESSAGE = f"Now it's Daytime for {DAYTIME_TIME_LIMIT_MINUTES} minutes, " \
-                            f"everyone can communicate and see messages and votes."
-NIGHTTIME_BEGINNING_MESSAGE = f"Now it's Nighttime for {NIGHTTIME_TIME_LIMIT_MINUTES} minutes, " \
-                              f"only mafia can communicate and see messages and votes."
+DAYTIME_START_MESSAGE_FORMAT = "Now it's Daytime for {} minutes, " \
+                               "everyone can communicate and see messages and votes."
+NIGHTTIME_START_MESSAGE_FORMAT = "Now it's Nighttime for {} minutes, " \
+                                 "only mafia can communicate and see messages and votes."
 VOTING_TIME_MESSAGE_FORMAT = "{} has ended, now it's time to vote! " \
                              "Waiting for all players to vote..."
 CUTTING_TO_VOTE_MESSAGE = "There is only one mafia member left, so no need for discussion" \
@@ -92,6 +88,10 @@ OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by C
     "Ray", "Reese", "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney",
     "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 random.shuffle(OPTIONAL_CODE_NAMES)  # without it some names are sampled too often...
+DEFAULT_NIGHTTIME_MINUTES = 1  # like in Ibraheem et al. 2022
+DEFAULT_DAYTIME_MINUTES = 3  # it was 2:30 in Ibraheem et al. 2022
+DAYTIME_MINUTES_KEY = "daytime_minutes"
+NIGHTTIME_MINUTES_KEY = "nighttime_minutes"
 
 # human player interface constants
 MANAGER_COLOR = "green"
@@ -115,6 +115,10 @@ WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter y
 GET_CODE_NAME_FROM_USER_MESSAGE = "Enter the name you were given for this game " \
                                   "(in the chat interface) - choose the name's number:"
 YOU_CAN_START_WRITING_MESSAGE = "You can now start writing messages to game!"
+
+
+def minutes_to_seconds(num_minutes):
+    return int(num_minutes * 60)
 
 
 def get_current_timestamp():
