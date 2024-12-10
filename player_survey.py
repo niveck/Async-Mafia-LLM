@@ -14,9 +14,10 @@ def get_llm_player_name(game_dir):
     return None
 
 
-def ask_player_for_numeric_rank(question, low_bound=DEFAULT_SCORE_LOW_BOUND,
+def ask_player_for_numeric_rank(llm_player_name, metric, low_bound=DEFAULT_SCORE_LOW_BOUND,
                                 high_bound=DEFAULT_SCORE_HIGH_BOUND):
-    print(colored(question, MANAGER_COLOR))
+    print(colored(SURVEY_QUESTION_FORMAT.format(llm_player_name), MANAGER_COLOR),
+          colored(metric + "?", MANAGER_COLOR, attrs=["bold"]))
     answer = ""
     while not (answer.isnumeric() and (low_bound <= int(answer) <= high_bound)):
         answer = input(colored(NUMERIC_SURVEY_QUESTION_FORMAT.format(low_bound, high_bound),
@@ -31,8 +32,7 @@ def run_survey_about_llm_player(game_dir, name):
         print(colored(LLM_REVELATION_MESSAGE, MANAGER_COLOR),
               colored(llm_player_name + "\n", MANAGER_COLOR, attrs=["bold"]))
         for metric in METRICS_TO_SCORE:
-            answer = ask_player_for_numeric_rank(SURVEY_QUESTION_FORMAT.format(llm_player_name,
-                                                                               metric))
+            answer = ask_player_for_numeric_rank(llm_player_name, metric)
             print()
             with open(game_dir / PERSONAL_SURVEY_FILE_FORMAT.format(name), "a") as f:
                 f.write(metric + METRIC_NAME_AND_SCORE_DELIMITER + answer + "\n")

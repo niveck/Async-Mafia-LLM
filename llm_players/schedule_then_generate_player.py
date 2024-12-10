@@ -44,7 +44,7 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         return turn_task_into_prompt(task, message_history)
 
     def create_generation_prompt(self, message_history):
-        task = f"Add a short message to the game's chat. " \
+        task = f"Add a very short message to the game's chat. " \
                f"Be specific and keep it relevant to the current situation, " \
                f"according to the last messages and the game's status. " \
                f"Your message should only be one short sentence! " \
