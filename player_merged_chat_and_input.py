@@ -9,8 +9,8 @@ from player_survey import run_survey_about_llm_player
 THREADING_WARNING_MESSAGE = "Pay attention! This interface allows you to read and write in the " \
                             "same terminal, but it is not recommended!\n" \
                             "It is better to use different terminals for viewing the chat and " \
-                            "for entering input:" \
-                            "\t`player_chat.py` and `player_input.py`, respectively."
+                            "for entering input:\n" \
+                            "\t`player_chat.py` and `player_input.py`, respectively.\n"
 WARNING_COLOR = "light_red"
 
 
