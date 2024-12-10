@@ -194,6 +194,8 @@ def main():
     wait_for_players(players)
     while not is_game_over(players):
         run_daytime(players, get_daytime_seconds(config))
+        if is_game_over(players):
+            break
         run_nighttime(players, get_nighttime_seconds(config))
     end_game()
 

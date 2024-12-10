@@ -101,7 +101,7 @@ NIGHTTIME_COLOR = "red"
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"
-GET_CHAT_INPUT_MESSAGE = ">"  # f"Enter a message to the public chat: "
+GET_CHAT_INPUT_MESSAGE = "> "  # f"Enter a message to the public chat: "
 VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
                            f"Enter '{VOTE_FLAG}' as your input to vote..."
 GET_VOTED_NAME_MESSAGE_FORMAT = "It's time to make your vote, {}!\nEnter your vote's number:"
@@ -116,7 +116,8 @@ WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter y
                                   "votes.\nAll other game info, messages and chat will be " \
                                   "visible in the chat interface (run by `player_chat.py`)"
 GET_CODE_NAME_FROM_USER_MESSAGE = "Enter the name you were given for this game " \
-                                  "(in the chat interface) - choose the name's number:"
+                                  "(in the chat interface) - choose the name's number:\n" \
+                                  "ATTENTION! They do NOT have the same numbers and order!"
 YOU_CAN_START_WRITING_MESSAGE = "You can now start writing messages to game!"
 
 # post game survey constants

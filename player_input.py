@@ -51,13 +51,13 @@ def write_text_to_game_loop(name, is_mafia, game_dir):
         elif not is_time_to_vote(game_dir):  # if it's time to vote then players can't chat
             with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(name), "a") as f:
                 f.write(format_message(name, user_input))
-    run_survey_about_llm_player(game_dir, name)
 
 
 def main():
     game_dir = get_game_dir_from_argv()
     name, is_mafia = get_name_and_role(game_dir)
     write_text_to_game_loop(name, is_mafia, game_dir)
+    run_survey_about_llm_player(game_dir, name)
 
 
 if __name__ == '__main__':
