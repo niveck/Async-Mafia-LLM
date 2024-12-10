@@ -154,6 +154,7 @@ def run_nighttime(players, nighttime_seconds):
     (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
     mafia_players = [player for player in players if player.is_mafia]
     bystanders = [player for player in players if not player.is_mafia]
+    print(colored(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_seconds), NIGHTTIME_COLOR))
     game_manager_announcement(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_seconds))
     run_phase(players, mafia_players, bystanders, game_dir / PUBLIC_NIGHTTIME_CHAT_FILE,
               nighttime_seconds, NIGHTTIME)
@@ -161,6 +162,7 @@ def run_nighttime(players, nighttime_seconds):
 
 def run_daytime(players, daytime_seconds):
     (game_dir / PHASE_STATUS_FILE).write_text(DAYTIME)
+    print(colored(DAYTIME_START_MESSAGE_FORMAT.format(daytime_seconds), DAYTIME_COLOR))
     game_manager_announcement(DAYTIME_START_MESSAGE_FORMAT.format(daytime_seconds))
     run_phase(players, players, players, game_dir / PUBLIC_DAYTIME_CHAT_FILE,
               daytime_seconds, DAYTIME)

@@ -25,6 +25,7 @@ def ask_player_for_numeric_rank(question, low_bound=DEFAULT_SCORE_LOW_BOUND,
 
 
 def run_survey_about_llm_player(game_dir, name):
+    print()
     llm_player_name = get_llm_player_name(game_dir)  # TODO maybe add an option of try runs and then add an option of choosing a random name
     if llm_player_name:
         print(colored(LLM_REVELATION_MESSAGE, MANAGER_COLOR),
