@@ -1,11 +1,16 @@
 import os
-import torch
 from functools import cache
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoConfig, \
-    pipeline
+from game_constants import get_current_timestamp
 from llm_players.llm_constants import TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, \
     INSTRUCTION_INPUT_RESPONSE_PATTERN, LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, NUM_BEAMS_KEY, \
     MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO
+print("Trying to import torch...", get_current_timestamp())
+import torch
+print("Finished importing torch!", get_current_timestamp())
+print("Trying to import from transformers...", get_current_timestamp())
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoConfig, \
+    pipeline
+print("Finished importing from transformers!", get_current_timestamp())
 
 CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
 
@@ -30,15 +35,6 @@ def cached_tokenizer(model_name):
 @cache
 def cached_pipeline(model_name, task):  # TODO: maybe use device as parameter?
     return pipeline(task, model_name, device_map="auto")
-
-
-# def log_model_choice(answer):  # TODO rewrite this function and use it in every possible way
-#     model_choices_logs_file = game_dir / "model_choices_logs.txt"
-#     if not model_choices_logs_file.exists():
-#         model_choices_logs_file.touch()
-#     log = "model chose to NOT generate..." if answer is None else "model chose to generate!"
-#     with open(model_choices_logs_file, "a") as f:
-#         f.write(f"[{time.strftime(TIME_FORMAT_FOR_TIMESTAMP)}] {log}\n")
 
 
 class LLMWrapper:
@@ -85,9 +81,9 @@ class LLMWrapper:
                                       "try `use_pipeline=False` in config")
 
     def direct_preprocessing(self, input_text, system_info) -> str:
-        # TODO: make sure system info is produced with space at the end
         if self.prompt_template == INSTRUCTION_INPUT_RESPONSE_PATTERN:
-            return f"### Instruction:\n{system_info + input_text}\n### Response: "
+            instruction = system_info.strip() + " " + input_text if system_info else input_text
+            return f"### Instruction:\n{instruction}\n### Response: "
         # elif self.prompt_template is of Phi-3 style:
             # return f"<|user|>{input_text}<|end|>\n<|assistant|>"
         elif self.prompt_template == LLAMA3_PATTERN:
@@ -105,7 +101,7 @@ class LLMWrapper:
     def direct_postprocessing(self, decoded_output):
         if self.prompt_template == INSTRUCTION_INPUT_RESPONSE_PATTERN:
             output = decoded_output.split("### Response:")[1].strip().split("</s>")[0]
-            # TODO: following lines are a reminder from SAUCE - debug to see if needed
+            # TODO: following lines are a reminder from SAUCE - debug to see if needed...
             # output = output.removeprefix(f"{self.name}: ")
             # time_and_name_prefix = f"] {self.name}: "
             # if time_and_name_prefix in output:

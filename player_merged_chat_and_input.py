@@ -1,4 +1,3 @@
-# TODO: change file name to player_merged_chat_and_input.py after committing (so git will remember the history of the file)
 from threading import Thread
 from termcolor import colored
 from game_constants import get_game_dir_from_argv

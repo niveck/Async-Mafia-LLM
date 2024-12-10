@@ -12,7 +12,7 @@ GAME_ID_NUM_DIGITS = 4
 NOTES_FILE = "notes.txt"  # for our use, post-game
 
 # files that host writes to and players read from
-DIRS_PREFIX = "./games"  # TODO maybe change to absolute!
+DIRS_PREFIX = "./games"  # working directory must be the repo
 GAME_CONFIG_FILE = "config.json"
 PLAYER_NAMES_FILE = "player_names.txt"
 REMAINING_PLAYERS_FILE = "remaining_players.txt"
@@ -45,6 +45,7 @@ BYSTANDER_ROLE = "bystander"
 MAFIA_WINS_MESSAGE = "Mafia wins!"
 BYSTANDERS_WIN_MESSAGE = "Bystanders win!"
 GAME_MANAGER_NAME = "Game-Manager"
+RULES_OF_THE_GAME_TITLE = "Rules of the game:"
 RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, either mafia or " \
                     "bystander. Every round starts with Daytime phase, where all players " \
                     "discuss together who they think the mafia players might be, and vote out " \

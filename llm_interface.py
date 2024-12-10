@@ -36,7 +36,7 @@ def get_llm_player():
                                                 GET_LLM_PLAYER_NAME_MESSAGE, OPERATOR_COLOR)
         player_config = [player for player in llm_players_configs
                          if player["name"] == player_name][0]
-    player_config[GAME_DIR_KEY] = game_dir  # TODO maybe GAME_DIR_KEY is unnecessary like "name"
+    player_config[GAME_DIR_KEY] = game_dir
     llm_player = llm_player_factory(player_config)
     (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(llm_player.name)).write_text(JOINED)
     return llm_player
@@ -56,8 +56,8 @@ def wait_writing_time(player, message):
 
 
 def eliminate(player):
+    # currently doesn't use player, but maybe in the future we can use player.logger for example
     print(colored(ELIMINATED_MESSAGE, OPERATOR_COLOR))
-    # TODO maybe log how much time it lasted in the game, how many players were left when it was voted out and maybe how many time it was voted for
 
 
 def get_vote_from_llm(player, message_history):
@@ -72,7 +72,6 @@ def get_vote_from_llm(player, message_history):
     # if didn't return: no name was in voting_message
     player.logger.log(MODEL_VOTED_INVALIDLY_LOG, voting_message)
     print(colored(MODEL_VOTED_INVALIDLY_LOG + ": " + voting_message, OPERATOR_COLOR))
-    # TODO: add log that if didn't return, then voting message didn't have a possible name
 
 
 def add_message_to_game(player, message_history):
@@ -87,7 +86,6 @@ def add_message_to_game(player, message_history):
 
 
 def end_game():
-    # TODO maybe add logging of something
     print(colored(GAME_ENDED_MESSAGE, OPERATOR_COLOR))
 
 

@@ -1,4 +1,4 @@
-# TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
+# TODO: maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from game_constants import *  # incl. random, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined, get_is_mafia
@@ -27,7 +27,7 @@ def notify_only_once_about_finish_writing(already_notified):
 
 def collect_vote(name, game_dir):
     remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
-    remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
+    remaining_player_names.remove(name)  # players shouldn't vote for themselves
     voted_name = get_player_name_from_user(remaining_player_names,
                                            GET_VOTED_NAME_MESSAGE_FORMAT.format(name))
     (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(name)).write_text(voted_name + "\n")  # '\n' for flush

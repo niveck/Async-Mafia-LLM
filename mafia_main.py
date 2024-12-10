@@ -68,15 +68,7 @@ def is_win_by_mafia(mafia_players, bystanders):
 def is_game_over(players):
     mafia_players = [player for player in players if player.is_mafia]
     bystanders = [player for player in players if not player.is_mafia]
-    return is_win_by_bystanders(mafia_players) or is_win_by_mafia(mafia_players, bystanders)  # TODO debug - for some reason this didn't return true when there were 1 mafia and 1 bystander
-
-
-def get_daytime_seconds(config):
-    return minutes_to_seconds(config[DAYTIME_MINUTES_KEY])
-
-
-def get_nighttime_seconds(config):
-    return minutes_to_seconds(config[NIGHTTIME_MINUTES_KEY])
+    return is_win_by_bystanders(mafia_players) or is_win_by_mafia(mafia_players, bystanders)
 
 
 def run_chat_round_between_players(players, chat_room):
@@ -147,25 +139,26 @@ def run_phase(players, voting_players, optional_votes_players, public_chat_file,
             run_chat_round_between_players(voting_players, public_chat_file)
     else:
         game_manager_announcement(CUTTING_TO_VOTE_MESSAGE)
+    print("Now voting starts...")
     voting_sub_phase(phase_name, voting_players, optional_votes_players, public_chat_file, players)
 
 
-def run_nighttime(players, nighttime_seconds):
+def run_nighttime(players, nighttime_minutes):
     (game_dir / PHASE_STATUS_FILE).write_text(NIGHTTIME)
     mafia_players = [player for player in players if player.is_mafia]
     bystanders = [player for player in players if not player.is_mafia]
-    print(colored(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_seconds), NIGHTTIME_COLOR))  # TODO it says minutes but it's seconds... fix
-    game_manager_announcement(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_seconds))
+    print(colored(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_minutes), NIGHTTIME_COLOR))
+    game_manager_announcement(NIGHTTIME_START_MESSAGE_FORMAT.format(nighttime_minutes))
     run_phase(players, mafia_players, bystanders, game_dir / PUBLIC_NIGHTTIME_CHAT_FILE,
-              nighttime_seconds, NIGHTTIME)
+              minutes_to_seconds(nighttime_minutes), NIGHTTIME)
 
 
-def run_daytime(players, daytime_seconds):
+def run_daytime(players, daytime_minutes):
     (game_dir / PHASE_STATUS_FILE).write_text(DAYTIME)
-    print(colored(DAYTIME_START_MESSAGE_FORMAT.format(daytime_seconds), DAYTIME_COLOR))  # TODO it says minutes but it's seconds... fix
-    game_manager_announcement(DAYTIME_START_MESSAGE_FORMAT.format(daytime_seconds))
+    print(colored(DAYTIME_START_MESSAGE_FORMAT.format(daytime_minutes), DAYTIME_COLOR))
+    game_manager_announcement(DAYTIME_START_MESSAGE_FORMAT.format(daytime_minutes))
     run_phase(players, players, players, game_dir / PUBLIC_DAYTIME_CHAT_FILE,
-              daytime_seconds, DAYTIME)
+              minutes_to_seconds(daytime_minutes), DAYTIME)
 
 
 def wait_for_players(players):
@@ -191,7 +184,7 @@ def get_all_player_out_of_voting_time():
 
 def end_game():
     get_all_player_out_of_voting_time()
-    print("Game has finished.")  # TODO: maybe log the game somehow? maybe save important details?..
+    print("Game has finished.")
 
 
 def main():
@@ -201,10 +194,10 @@ def main():
     players = get_players(config)
     wait_for_players(players)
     while not is_game_over(players):
-        run_daytime(players, get_daytime_seconds(config))
+        run_daytime(players, config[DAYTIME_MINUTES_KEY])
         if is_game_over(players):
             break
-        run_nighttime(players, get_nighttime_seconds(config))
+        run_nighttime(players, config[NIGHTTIME_MINUTES_KEY])
     end_game()
 
 

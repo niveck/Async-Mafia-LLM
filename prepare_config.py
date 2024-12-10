@@ -29,7 +29,7 @@ options:
 
 Process finished with exit code 0
 
-"""  # TODO update docstring with new flags
+"""
 import json
 import argparse
 import random

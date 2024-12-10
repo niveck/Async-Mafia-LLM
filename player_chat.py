@@ -1,4 +1,4 @@
-# TODO maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
+# TODO: maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_game_over, is_time_to_vote, all_players_joined, get_is_mafia, \
     is_nighttime
@@ -6,11 +6,11 @@ from game_status_checks import is_game_over, is_time_to_vote, all_players_joined
 
 def welcome_player(game_dir):
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
-    # TODO: add underline title of rules of the game
+    print(colored(RULES_OF_THE_GAME_TITLE, MANAGER_COLOR, attrs=["underline"]))
     print(colored(RULES_OF_THE_GAME + "\n", MANAGER_COLOR))
     name, real_name = get_player_name_and_real_name_from_user(game_dir)
     print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR))
-    print(colored(name, MANAGER_COLOR, attrs=["bold"]))  # TODO make a different color for more bolding
+    print(colored(name, MANAGER_COLOR, attrs=["bold"]))
     is_mafia = get_is_mafia(name, game_dir)
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
@@ -27,7 +27,7 @@ def welcome_player(game_dir):
 def display_lines_from_file(game_dir, file_name, num_read_lines, display_color):
     with open(game_dir / file_name, "r") as f:
         lines = f.readlines()[num_read_lines:]
-    if len(lines) > 0:  # TODO if print() is deleted then remove this if!
+    if len(lines) > 0:  # this `if` in needed because of `print()` that is used for multithreading
         print()  # prevents the messages from being printed in the same line as the middle of input
         for line in lines:
             print(colored(line.strip(), display_color))

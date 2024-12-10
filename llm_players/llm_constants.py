@@ -15,7 +15,7 @@ DEFAULT_PROMPT_PATTERN = "default"
 DEFAULT_MAX_NEW_TOKENS = 100
 DEFAULT_NUM_BEAMS = 4
 
-DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates the amount of words written normally per second  # TODO change such that using this feature will be determined by the LLM config in the game config
+DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates number of words written normally per second
 
 # pipeline formats:
 TEXT_GENERATION_TASK = "text-generation"
@@ -28,7 +28,7 @@ USE_TURN_TOKEN_OPTIONS = ["<send>", "<speak>", "<use>", "[[send]]", "[[speak]]",
 DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
 DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia." \
-                      f"You have a very outgoing and talkative personality.\n" \
+                      f"You have an outgoing and talkative personality.\n" \
                       f"The rules of the game: {RULES_OF_THE_GAME}"
 
 # LLM players type names:
