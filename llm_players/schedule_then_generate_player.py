@@ -30,7 +30,6 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
 
     def create_scheduling_prompt(self, message_history):
         # removed these because of too many talks:
-        # "Make sure to say something every once in a while."
         # "If one of the last messages has mentioned you, then choose to send a message now."
         task = f"Do you want to send a message to the group chat now, or do you prefer to wait " \
                f"for now and see what messages others will send? " \
@@ -40,7 +39,8 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                f"your name compared to the amount of messages with names of other players " \
                f"and let them have their turn too! " \
                f"Check the speaker name in the last few messages, and decide accordingly based " \
-               f"on whether you talked too much or not enough. " \
+               f"on whether you talked too much or not enough - " \
+               f"make sure to say something every once in a while. " \
                f"Reply only with {self.use_turn_token} if you want to send a message now, " \
                f"or only with {self.pass_turn_token} if you want to wait for now, " \
                f"based on your decision! "
