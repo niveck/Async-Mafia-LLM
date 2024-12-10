@@ -182,7 +182,13 @@ def wait_for_players(players):
     print("Game is now running! Its content is displayed to players.")
 
 
+def get_all_player_out_of_voting_time():
+    current_phase = (game_dir / PHASE_STATUS_FILE).read_text()
+    (game_dir / PHASE_STATUS_FILE).write_text(current_phase.replace(VOTING_TIME, ""))
+
+
 def end_game():
+    get_all_player_out_of_voting_time()
     print("Game has finished.")  # TODO: maybe log the game somehow? maybe save important details?..
 
 
