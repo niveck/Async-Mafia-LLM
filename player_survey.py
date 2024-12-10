@@ -19,8 +19,8 @@ def ask_player_for_numeric_rank(question, low_bound=DEFAULT_SCORE_LOW_BOUND,
     print(colored(question, MANAGER_COLOR))
     answer = ""
     while not (answer.isnumeric() and (low_bound <= int(answer) <= high_bound)):
-        answer = input(colored(NUMERIC_SURVEY_QUESTION_FORMAT.format(low_bound, high_bound)),
-                       MANAGER_COLOR)
+        answer = input(colored(NUMERIC_SURVEY_QUESTION_FORMAT.format(low_bound, high_bound),
+                               MANAGER_COLOR))
     return answer
 
 

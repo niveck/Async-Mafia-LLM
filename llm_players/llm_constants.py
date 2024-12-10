@@ -27,7 +27,8 @@ PASS_TURN_TOKEN_OPTIONS = ["<wait>", "<pass>", "<quiet>", "[[wait]]", "[[pass]]"
 USE_TURN_TOKEN_OPTIONS = ["<send>", "<speak>", "<use>", "[[send]]", "[[speak]]", "[[use]]"]
 DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
 DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
-GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia.\n" \
+GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia." \
+                      f"You have a very outgoing and talkative personality.\n" \
                       f"The rules of the game: {RULES_OF_THE_GAME}"
 
 # LLM players type names:
