@@ -2,6 +2,7 @@
 from game_constants import *  # incl. random, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined, get_is_mafia
+from player_survey import run_survey_about_llm_player
 
 
 def get_name_and_role(game_dir):
@@ -17,6 +18,13 @@ def get_name_and_role(game_dir):
     return name, is_mafia
 
 
+def notify_only_once_about_finish_writing(already_notified):
+    if not already_notified:
+        print(colored(YOU_CANT_WRITE_MESSAGE, MANAGER_COLOR))
+        already_notified = True
+    return already_notified
+
+
 def collect_vote(name, game_dir):
     remaining_player_names = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
     remaining_player_names.remove(name)  # players shouldn't vote for themselves  # TODO validate that there is no error in remove if someone that was voted our tries to vote
@@ -26,10 +34,11 @@ def collect_vote(name, game_dir):
 
 
 def write_text_to_game_loop(name, is_mafia, game_dir):
+    already_notified = False
     while not is_game_over(game_dir):
         if is_voted_out(name, game_dir):
-            print(colored(YOU_CANT_WRITE_MESSAGE, MANAGER_COLOR))
-            break  # can't write or vote anymore (but can still read the game's content)
+            already_notified = notify_only_once_about_finish_writing(already_notified)
+            continue  # can't write or vote anymore, waiting for final survey
         if not is_mafia and is_nighttime(game_dir):
             continue  # only mafia can communicate during nighttime
         user_input = input(colored(GET_CHAT_INPUT_MESSAGE, MANAGER_COLOR)).strip()
@@ -42,6 +51,7 @@ def write_text_to_game_loop(name, is_mafia, game_dir):
         elif not is_time_to_vote(game_dir):  # if it's time to vote then players can't chat
             with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(name), "a") as f:
                 f.write(format_message(name, user_input))
+    run_survey_about_llm_player(game_dir, name)
 
 
 def main():

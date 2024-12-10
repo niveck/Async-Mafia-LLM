@@ -8,11 +8,7 @@ def welcome_player(game_dir):
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
     # TODO: add underline title of rules of the game
     print(colored(RULES_OF_THE_GAME + "\n", MANAGER_COLOR))
-    real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
-    real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
-                                    for real_to_code in real_names_to_codenames_str])
-    real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
-    name = real_names_to_codenames[real_name]
+    name, real_name = get_player_name_and_real_name_from_user(game_dir)
     print(colored(CODE_NAME_REVELATION_MESSAGE_FORMAT.format(real_name), MANAGER_COLOR))
     print(colored(name, MANAGER_COLOR, attrs=["bold"]))  # TODO make a different color for more bolding
     is_mafia = get_is_mafia(name, game_dir)

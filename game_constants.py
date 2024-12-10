@@ -29,6 +29,7 @@ PERSONAL_STATUS_FILE_FORMAT = "{}_status.txt"
 # files that hosts read from and players write to
 PERSONAL_CHAT_FILE_FORMAT = "{}_chat.txt"
 PERSONAL_VOTE_FILE_FORMAT = "{}_vote.txt"
+PERSONAL_SURVEY_FILE_FORMAT = "{}_survey.txt"
 LLM_LOG_FILE_FORMAT = "{}_log.txt"
 
 # constant strings for info files
@@ -107,7 +108,9 @@ GET_VOTED_NAME_MESSAGE_FORMAT = "It's time to make your vote, {}!\nEnter your vo
 CODE_NAME_REVELATION_MESSAGE_FORMAT = "\nHi {}! Your name for this game will be:"
 ROLE_REVELATION_MESSAGE = "\nYour role in the game is:"
 MAFIA_REVELATION_MESSAGE = "Mafia members were:"
-YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages."
+YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages.\n" \
+                         "Please wait for the end of the game for our short survey.\n" \
+                         "You can meanwhile still read the game's chat and see what happens.\n"
 WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to start the game..."
 WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter your messages and " \
                                   "votes.\nAll other game info, messages and chat will be " \
@@ -115,6 +118,23 @@ WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter y
 GET_CODE_NAME_FROM_USER_MESSAGE = "Enter the name you were given for this game " \
                                   "(in the chat interface) - choose the name's number:"
 YOU_CAN_START_WRITING_MESSAGE = "You can now start writing messages to game!"
+
+# post game survey constants
+HUMAN_SIMILARITY = "similarity to human behavior"
+TIMING = "timing of messaging"
+RELEVANCE = "relevance of messages"
+METRICS_TO_SCORE = [HUMAN_SIMILARITY, TIMING, RELEVANCE]
+METRIC_NAME_AND_SCORE_DELIMITER = " - "
+DEFAULT_SCORE_LOW_BOUND = 0
+DEFAULT_SCORE_HIGH_BOUND = 100
+SURVEY_QUESTION_FORMAT = "How would you score the {}'s {}?"
+NUMERIC_SURVEY_QUESTION_FORMAT = "Please provide an *integer* answer between {} and {}, including: "
+LLM_REVELATION_MESSAGE = "In this game, the LLM player was:"
+NO_LLM_IN_GAME_MESSAGE = "This game was a simulation with no LLM player, " \
+                         "so we don't have many survey questions."
+ASK_USER_FOR_COMMENTS_MESSAGE = "Please add any additional comments if you have for us: "
+SURVEY_COMMENTS_TITLE = "Comments:\n"
+THANK_YOU_GOODBYE_MESSAGE = "Thank you very much for participating! Goodbye"
 
 
 def minutes_to_seconds(num_minutes):
@@ -156,3 +176,12 @@ def get_player_name_from_user(optional_player_names, input_message, message_colo
         name_id = input(colored(f"{input_message}\n{enumerated_names}\n", message_color))
     name = player_names_by_id[name_id]
     return name
+
+
+def get_player_name_and_real_name_from_user(game_dir):
+    real_names_to_codenames_str = (game_dir / REAL_NAMES_FILE).read_text().splitlines()
+    real_names_to_codenames = dict([real_to_code.split(REAL_NAME_CODENAME_DELIMITER)
+                                    for real_to_code in real_names_to_codenames_str])
+    real_name = get_player_name_from_user(real_names_to_codenames.keys(), GET_USER_NAME_MESSAGE)
+    name = real_names_to_codenames[real_name]
+    return name, real_name
