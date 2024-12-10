@@ -39,6 +39,8 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                f"discussion with your messages! Pay attention to the amount of messages with " \
                f"your name compared to the amount of messages with names of other players " \
                f"and let them have their turn too! " \
+               f"Check the speaker name in the last few messages, and decide accordingly based " \
+               f"on whether you talked too much or not enough. " \
                f"Reply only with {self.use_turn_token} if you want to send a message now, " \
                f"or only with {self.pass_turn_token} if you want to wait for now, " \
                f"based on your decision! "
