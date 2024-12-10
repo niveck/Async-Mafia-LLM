@@ -28,8 +28,8 @@ USE_TURN_TOKEN_OPTIONS = ["<send>", "<speak>", "<use>", "[[send]]", "[[speak]]",
 DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
 DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia." \
-                      f"You have an outgoing and talkative personality.\n" \
-                      f"The rules of the game: {RULES_OF_THE_GAME}"
+                      f"You have a very outgoing personality.\n" \
+                      f"The rules of the game: {RULES_OF_THE_GAME}"  # maybe "talkative" personality
 
 # LLM players type names:
 SCHEDULE_THEN_GENERATE_TYPE = "schedule_then_generate"

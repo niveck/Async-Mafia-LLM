@@ -29,18 +29,19 @@ def run_survey_about_llm_player(game_dir, name):
     llm_player_name = get_llm_player_name(game_dir)
     if llm_player_name:
         print(colored(LLM_REVELATION_MESSAGE, MANAGER_COLOR),
-              colored(llm_player_name, MANAGER_COLOR, attrs=["bold"]))
+              colored(llm_player_name + "\n", MANAGER_COLOR, attrs=["bold"]))
         for metric in METRICS_TO_SCORE:
             answer = ask_player_for_numeric_rank(SURVEY_QUESTION_FORMAT.format(llm_player_name,
                                                                                metric))
+            print()
             with open(game_dir / PERSONAL_SURVEY_FILE_FORMAT.format(name), "a") as f:
                 f.write(metric + METRIC_NAME_AND_SCORE_DELIMITER + answer + "\n")
     else:
-        print(colored(NO_LLM_IN_GAME_MESSAGE, MANAGER_COLOR))
+        print(colored(NO_LLM_IN_GAME_MESSAGE + "\n", MANAGER_COLOR))
     comments = input(colored(ASK_USER_FOR_COMMENTS_MESSAGE, MANAGER_COLOR)).strip()
     with open(game_dir / PERSONAL_SURVEY_FILE_FORMAT.format(name), "a") as f:
         f.write(SURVEY_COMMENTS_TITLE + comments + "\n")
-    print(colored(THANK_YOU_GOODBYE_MESSAGE, MANAGER_COLOR))
+    print(colored("\n" + THANK_YOU_GOODBYE_MESSAGE, MANAGER_COLOR))
 
 
 def main():

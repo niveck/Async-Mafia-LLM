@@ -55,5 +55,6 @@ class GenerateThenSchedulePlayer(LLMPlayer):
                f"Be specific and keep it relevant to the current situation, " \
                f"according to the last messages and the game's status. " \
                f"Your message should only be one short sentence! " \
-               f"Don't add a message that you've already added (in the chat history)!"
+               f"Don't add a message that you've already added (in the chat history)! " \
+               f"It is very important that you don't repeat yourself!"
         return turn_task_into_prompt(task, message_history)

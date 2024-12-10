@@ -109,7 +109,7 @@ def main():
         if is_voted_out(player.name, game_dir):
             eliminate(player)
             break
-        if is_time_to_vote(game_dir):
+        if is_time_to_vote(game_dir) and (player.is_mafia or not is_nighttime(game_dir)):
             get_vote_from_llm(player, message_history)
             while is_time_to_vote(game_dir):
                 continue  # wait for voting time to end when all players have voted
