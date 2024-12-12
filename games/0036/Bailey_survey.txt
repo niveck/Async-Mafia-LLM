@@ -1,0 +1,5 @@
+similarity to human behavior - 10
+timing of messaging - 90
+relevance of messages - 70
+Comments:
+The LLM need to write shortly.

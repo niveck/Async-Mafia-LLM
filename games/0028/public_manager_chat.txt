@@ -1,0 +1,8 @@
+[13:27:03] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
+[13:36:16] Game-Manager: Whitney was voted out. Their role was bystander
+[13:36:17] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
+[13:38:53] Game-Manager: Adrian was voted out. Their role was bystander
+[13:38:53] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
+[13:43:23] Game-Manager: Sutton was voted out. Their role was bystander
+[13:43:23] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
+[13:44:41] Game-Manager: Kai was voted out. Their role was bystander
