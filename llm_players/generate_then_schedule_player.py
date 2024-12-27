@@ -1,4 +1,5 @@
-from llm_players.llm_constants import turn_task_into_prompt, GENERATE_THEN_SCHEDULE_TYPE
+from llm_players.llm_constants import turn_task_into_prompt, GENERATE_THEN_SCHEDULE_TYPE, \
+    make_more_human_like
 from llm_players.llm_player import LLMPlayer
 from llm_players.llm_wrapper import LLMWrapper
 
@@ -29,13 +30,14 @@ class GenerateThenSchedulePlayer(LLMPlayer):
         prompt = self.create_generation_prompt(message_history)
         self.logger.log("prompt in generate_message", prompt)
         potential_message = self.llm.generate(prompt, self.get_system_info_message())
+        potential_message = make_more_human_like(potential_message)
         self.logger.log("potential_message in generate_message", potential_message)
         if self.should_generate_message([potential_message] + message_history):
             return potential_message
         else:
             return ""
 
-    def create_scheduling_prompt(self, potential_message, message_history):
+    def create_scheduling_prompt(self, potential_message, message_history):  # TODO maybe clarify that later there will be a new potential messages that it will get; also: # TODO add the option for the changing prompt according to phase messages
         task = f"Here is a potential message you can send to the game's chat: " \
                f"{potential_message.strip()}\nDo you want to send this message to the game's " \
                f"chat now, or do you prefer to wait for now and see what messages others will " \

@@ -29,8 +29,8 @@ DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
 DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia. " \
                       f"You have an outgoing personality, and you like to participate in games, " \
-                      f"but you also don't want everyone to have their eyes on you all the time.\n" \
-                      f"The rules of the game: {RULES_OF_THE_GAME}"
+                      f"but you also don't want everyone to have their eyes on you all the time." \
+                      f"\nThe rules of the game: {RULES_OF_THE_GAME}"
 # I removed the following because it didn't choose to wait: "You have a very outgoing personality"
 
 # LLM players type names:
@@ -88,3 +88,10 @@ def turn_task_into_prompt(task, message_history):
     # not necessarily needed with all models, seemed relevant to Llama3.1:
     prompt += "Don't add the time, the timestamp or the [timestamp] in your answer!\n"
     return prompt
+
+
+def make_more_human_like(message):
+    if message.endswith(".") and not message.endswith(".."):
+        # remove the formal style of ending sentences with ".", with no effect over multiple dots
+        message = message[:-1]
+    return message.capitalize()  # Leaves only the first character in caps (which is still common)

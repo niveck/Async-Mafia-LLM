@@ -38,8 +38,10 @@ class LLMPlayer(ABC):
         raise NotImplementedError()
 
     def get_vote(self, message_history, candidate_vote_names):
-        task = "From the following remaining players, which player you want to vote for to " \
-               "eliminate? Reply with only one name from the list, and nothing but the name: "
+        task = f"From the following remaining players, which player you want to vote for " \
+               f"to eliminate? Base your answer on the conversation as seen in the message " \
+               f"history, and especially on what you ({self.name}) said. " \
+               f"Reply with only one name from the list, and nothing but that name: "
         task += ", ".join(candidate_vote_names)
         prompt = turn_task_into_prompt(task, message_history)
         system_info = self.get_system_info_message()

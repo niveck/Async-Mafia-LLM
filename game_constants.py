@@ -58,14 +58,17 @@ RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, eithe
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
 MESSAGE_FORMAT = "[{timestamp}] {name}: {message}"
+MESSAGE_PARSING_PATTERN = r"[[](\d\d):(\d\d):(\d\d)[]] (.+): (.+)"  # depends on MESSAGE_FORMAT
 VOTING_MESSAGE_FORMAT = "{} voted for {}"
 VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
 REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
 
 # game constants
-DAYTIME_START_MESSAGE_FORMAT = "Now it's Daytime for {} minutes, " \
+DAYTIME_START_PREFIX = "Now it's Daytime"  # used for analysis
+DAYTIME_START_MESSAGE_FORMAT = DAYTIME_START_PREFIX + " for {} minutes, " \
                                "everyone can communicate and see messages and votes."
-NIGHTTIME_START_MESSAGE_FORMAT = "Now it's Nighttime for {} minutes, " \
+NIGHTTIME_START_PREFIX = "Now it's Nighttime"  # used for analysis
+NIGHTTIME_START_MESSAGE_FORMAT = NIGHTTIME_START_PREFIX + " for {} minutes, " \
                                  "only mafia can communicate and see messages and votes."
 VOTING_TIME_MESSAGE_FORMAT = "{} has ended, now it's time to vote! " \
                              "Waiting for all players to vote..."
@@ -122,6 +125,7 @@ GET_CODE_NAME_FROM_USER_MESSAGE = "Enter the name you were given for this game "
 YOU_CAN_START_WRITING_MESSAGE = "You can now start writing messages to game!"
 
 # post game survey constants
+LLM_IDENTIFICATION = "Was the LLM identified"
 HUMAN_SIMILARITY = "similarity to human behavior"
 TIMING = "timing of messaging"
 RELEVANCE = "relevance of messages"
@@ -129,14 +133,24 @@ METRICS_TO_SCORE = [HUMAN_SIMILARITY, TIMING, RELEVANCE]
 METRIC_NAME_AND_SCORE_DELIMITER = " - "
 DEFAULT_SCORE_LOW_BOUND = 0
 DEFAULT_SCORE_HIGH_BOUND = 100
-SURVEY_QUESTION_FORMAT = "How would you score the {}'s"
+SURVEY_QUESTION_FORMAT = "How would you score {}'s"
 NUMERIC_SURVEY_QUESTION_FORMAT = "Please provide an *integer* answer between {} and {}, including: "
+LLM_IDENTIFICATION_SURVEY_MESSAGE = "Which of the players do you think the LLM was?"
+CORRECT_GUESS_MESSAGE = "This is correct!"
+WRONG_GUESS_MESSAGE = "This is wrong!"
 LLM_REVELATION_MESSAGE = "In this game, the LLM player was:"
 NO_LLM_IN_GAME_MESSAGE = "This game was a simulation with no LLM player, " \
                          "so we don't have many survey questions."
 ASK_USER_FOR_COMMENTS_MESSAGE = "Please add any additional comments if you have for us: "
-SURVEY_COMMENTS_TITLE = "Comments:\n"
+SURVEY_COMMENTS_TITLE = "Comments:"
 THANK_YOU_GOODBYE_MESSAGE = "Thank you very much for participating! Goodbye"
+
+# LLM log strings
+SCHEDULING_DECISION_LOG = "scheduling decision"
+MODEL_CHOSE_TO_USE_TURN_LOG = "The LLM player has chosen to use its turn and generate a message!"
+MODEL_CHOSE_TO_PASS_TURN_LOG = "The LLM player has chosen to pass its turn " \
+                               "without generating a message!"
+MODEL_VOTED_INVALIDLY_LOG = "The LLM player has generated a message with no valid vote..."
 
 
 def minutes_to_seconds(num_minutes):

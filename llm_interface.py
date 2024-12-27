@@ -11,7 +11,6 @@ LLM_PLAYER_LOADED_MESSAGE = "The LLM PLayer was loaded successfully, " \
                             "now waiting for all other players to join..."
 ALL_PLAYERS_JOINED_MESSAGE = "All players have joined, now the game can start."
 LLM_VOTE_MESSAGE_FORMAT = "The LLM player has voted for: {}"
-MODEL_VOTED_INVALIDLY_LOG = "The LLM player has generated a message with no valid vote..."
 GAME_ENDED_MESSAGE = "Game has ended, without being voted out!"
 GET_LLM_PLAYER_NAME_MESSAGE = "This game has multiple LLM players, which one you want to run now?"
 ELIMINATED_MESSAGE = "This LLM player was eliminated from the game..."
@@ -79,10 +78,15 @@ def add_message_to_game(player, message_history):
         return  # only mafia can communicate during nighttime
     message = player.generate_message(message_history).strip()
     if message:
+        player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
         with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
             f.write(format_message(player.name, message))
+        print(colored(MODEL_CHOSE_TO_USE_TURN_LOG, OPERATOR_COLOR))
         # artificially making the model taking time to write the message
         wait_writing_time(player, message)
+    else:
+        player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_PASS_TURN_LOG)
+        print(colored(MODEL_CHOSE_TO_PASS_TURN_LOG, OPERATOR_COLOR))
 
 
 def end_game():

@@ -1,5 +1,6 @@
-from game_constants import PLAYER_NAMES_FILE, GAME_MANAGER_NAME
-from llm_players.llm_constants import turn_task_into_prompt, SCHEDULE_THEN_GENERATE_TYPE
+from game_constants import REMAINING_PLAYERS_FILE, GAME_MANAGER_NAME
+from llm_players.llm_constants import turn_task_into_prompt, SCHEDULE_THEN_GENERATE_TYPE, \
+    make_more_human_like
 from llm_players.llm_player import LLMPlayer
 from llm_players.llm_wrapper import LLMWrapper
 
@@ -34,14 +35,16 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         if self.should_generate_message(message_history):
             prompt = self.create_generation_prompt(message_history)
             self.logger.log("prompt in generate_message", prompt)
-            return self.llm.generate(prompt, self.get_system_info_message())
+            message = self.llm.generate(prompt, self.get_system_info_message())
+            message = make_more_human_like(message)
+            return message
         else:
             return ""
 
     def talkative_scheduling_prompt_modifier(self, message_history):
         if not message_history:
             return TALKATIVE_VERSION
-        all_players = (self.game_dir / PLAYER_NAMES_FILE).read_text().splitlines()
+        all_players = (self.game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
         players_counts = {player: 0 for player in all_players}
         for message in message_history[::-1]:
             if f"] {GAME_MANAGER_NAME}: " in message and "voted for" in message:  # TODO constants!
@@ -56,7 +59,6 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
             return TALKATIVE_VERSION
         else:
             return QUIETER_VERSION
-
 
     def create_scheduling_prompt(self, message_history):
         # removed these because of too many talks:
