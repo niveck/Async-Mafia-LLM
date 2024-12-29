@@ -115,6 +115,10 @@ MAFIA_REVELATION_MESSAGE = "Mafia members were:"
 YOU_CANT_WRITE_MESSAGE = "You were voted out and can no longer write messages.\n" \
                          "Please wait for the end of the game for our short survey.\n" \
                          "You can meanwhile still read the game's chat and see what happens.\n"
+HOW_MANY_MAFIA_MESSAGE_PART_1 = "The current game has"
+HOW_MANY_MAFIA_MESSAGE_PART_2 = "players in the mafia team."
+OTHER_MAFIA_NAMES_MESSAGE = "The other mafia members are:"
+MAFIA_KNOW_EACH_OTHER_MESSAGE = "The mafia members know each other's identities."
 WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE = "Waiting for all players to join to start the game..."
 WELCOME_INPUT_INTERFACE_MESSAGE = "This interface will only serve you to enter your messages and " \
                                   "votes.\nAll other game info, messages and chat will be " \

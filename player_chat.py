@@ -4,6 +4,19 @@ from game_status_checks import is_game_over, is_time_to_vote, all_players_joined
     is_nighttime
 
 
+def introducing_mafia_members(game_dir, is_mafia, name):
+    mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()
+    print(colored(HOW_MANY_MAFIA_MESSAGE_PART_1, MANAGER_COLOR),
+          colored(len(mafia_names), MANAGER_COLOR, attrs=["bold", "underline"]),
+          colored(HOW_MANY_MAFIA_MESSAGE_PART_2, MANAGER_COLOR))
+    if is_mafia:
+        other_mafia_names = [other_name for other_name in mafia_names if other_name != name]
+        print(colored(OTHER_MAFIA_NAMES_MESSAGE, MANAGER_COLOR),
+              colored(", ".join(other_mafia_names), NIGHTTIME_COLOR), "\n")
+    else:
+        print(colored(MAFIA_KNOW_EACH_OTHER_MESSAGE, MANAGER_COLOR), "\n")
+
+
 def welcome_player(game_dir):
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
     print(colored(RULES_OF_THE_GAME_TITLE, MANAGER_COLOR, attrs=["underline"]))
@@ -15,8 +28,9 @@ def welcome_player(game_dir):
     role = get_role_string(is_mafia)
     role_color = NIGHTTIME_COLOR if is_mafia else DAYTIME_COLOR
     print(colored(ROLE_REVELATION_MESSAGE, MANAGER_COLOR))
-    print(colored(role, role_color))
+    print(colored(role + "\n", role_color))
     (game_dir / PERSONAL_STATUS_FILE_FORMAT.format(name)).write_text(JOINED)
+    introducing_mafia_members(game_dir, is_mafia, name)
     print(colored(WAITING_FOR_ALL_PLAYERS_TO_JOIN_MESSAGE, MANAGER_COLOR))
     while not all_players_joined(game_dir):
         continue
