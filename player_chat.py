@@ -6,15 +6,27 @@ from game_status_checks import is_game_over, is_time_to_vote, all_players_joined
 
 def introducing_mafia_members(game_dir, is_mafia, name):
     mafia_names = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()
-    print(colored(HOW_MANY_MAFIA_MESSAGE_PART_1, MANAGER_COLOR),
-          colored(len(mafia_names), MANAGER_COLOR, attrs=["bold", "underline"]),
-          colored(HOW_MANY_MAFIA_MESSAGE_PART_2, MANAGER_COLOR))
-    if is_mafia:
-        other_mafia_names = [other_name for other_name in mafia_names if other_name != name]
-        print(colored(OTHER_MAFIA_NAMES_MESSAGE, MANAGER_COLOR),
-              colored(", ".join(other_mafia_names), NIGHTTIME_COLOR), "\n")
+    if len(mafia_names) > 1:
+        start = HOW_MANY_MAFIA_MESSAGE_START
+        bold = len(mafia_names)
+        end = HOW_MANY_MAFIA_MESSAGE_END
+        introduce_other_mafia = True
     else:
-        print(colored(MAFIA_KNOW_EACH_OTHER_MESSAGE, MANAGER_COLOR), "\n")
+        start = ONLY_ONE_MAFIA_MESSAGE_START
+        bold = ONLY_ONE_MAFIA_MESSAGE_BOLD
+        end = ONLY_ONE_MAFIA_MESSAGE_END
+        introduce_other_mafia = False
+    print(colored(start, MANAGER_COLOR), colored(bold, MANAGER_COLOR, attrs=["bold", "underline"]),
+          colored(end, MANAGER_COLOR))
+    if introduce_other_mafia:
+        if is_mafia:
+            other_mafia_names = [other_name for other_name in mafia_names if other_name != name]
+            print(colored(OTHER_MAFIA_NAMES_MESSAGE, MANAGER_COLOR),
+                  colored(", ".join(other_mafia_names), NIGHTTIME_COLOR), "\n")
+        else:
+            print(colored(MAFIA_KNOW_EACH_OTHER_MESSAGE, MANAGER_COLOR), "\n")
+    else:
+        print()
 
 
 def welcome_player(game_dir):
