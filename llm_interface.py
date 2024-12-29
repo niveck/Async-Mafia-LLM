@@ -65,7 +65,8 @@ def get_vote_from_llm(player, message_history):
     voting_message = player.get_vote(message_history, candidate_vote_names)
     for name in candidate_vote_names:
         if name in voting_message:  # update game manger
-            (game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name)).write_text(name + "\n")  # '\n' for flush
+            with open(game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name), "a") as f:
+                f.write(name + "\n")
             print(colored(LLM_VOTE_MESSAGE_FORMAT.format(name), OPERATOR_COLOR))
             return
     # if didn't return: no name was in voting_message

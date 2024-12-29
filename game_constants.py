@@ -111,6 +111,7 @@ PARTICIPATION_CONSENT_MESSAGE = "Thank you for participating in our research. By
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"
+NOT_TIME_TO_VOTE_MESSAGE = "This is not the time to vote yet."
 GET_CHAT_INPUT_MESSAGE = "> "  # f"Enter a message to the public chat: "
 VOTE_INSTRUCTION_MESSAGE = f"We are now waiting for everyone to cast their vote!\n" \
                            f"Enter '{VOTE_FLAG}' as your input to vote..."

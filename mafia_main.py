@@ -15,7 +15,7 @@ class Player:
         self.personal_chat_file = game_dir / PERSONAL_CHAT_FILE_FORMAT.format(self.name)
         self.personal_chat_file_lines_read = 0
         self.personal_vote_file = game_dir / PERSONAL_VOTE_FILE_FORMAT.format(self.name)
-        self.personal_vote_file_last_modified = os.path.getmtime(self.personal_vote_file)
+        self.personal_vote_file_lines_read = 0
         # status is whether the player has joined and then whether was voted out
         self.personal_status_file = game_dir / PERSONAL_STATUS_FILE_FORMAT.format(self.name)
 
@@ -27,15 +27,13 @@ class Player:
         return lines
 
     def get_voted_player(self):
-        return self.personal_vote_file.read_text().strip()  # TODO maybe use other mechanism to get shorter time of updates - like adding a new line to it and counting the lines - if so then it is important to change the voting mechanism in both the llm_interface and in the player_input!
-
-    def did_cast_new_vote(self):
-        last_modified = os.path.getmtime(self.personal_vote_file)
-        if last_modified > self.personal_vote_file_last_modified:
-            self.personal_vote_file_last_modified = last_modified
-            return True
+        all_votes = self.personal_vote_file.read_text().splitlines()
+        new_votes = all_votes[self.personal_vote_file_lines_read:]
+        if new_votes:
+            self.personal_vote_file_lines_read += len(new_votes)  # should be 1 if works correctly
+            return new_votes[-1].strip()
         else:
-            return False
+            return None
 
     def eliminate(self):
         self.personal_status_file.write_text(VOTED_OUT)
@@ -91,14 +89,15 @@ def get_voted_out_name(optional_votes_players, public_chat_file, voting_players)
     while voting_players:
         voted_players = []
         for player in voting_players:
-            if player.did_cast_new_vote():  # TODO maybe this part doesn't work well? since it takes too much time to get someone_voted_out
-                voted_players.append(player)
-                voted_for = player.get_voted_player()
-                if voted_for in votes:
-                    with open(public_chat_file, "a") as f:
-                        voting_message = VOTING_MESSAGE_FORMAT.format(player.name, voted_for)
-                        f.write(format_message(GAME_MANAGER_NAME, voting_message))
-                    votes[voted_for] += 1
+            voted_for = player.get_voted_player()
+            if not voted_for:
+                continue
+            voted_players.append(player)
+            if voted_for in votes:
+                with open(public_chat_file, "a") as f:
+                    voting_message = VOTING_MESSAGE_FORMAT.format(player.name, voted_for)
+                    f.write(format_message(GAME_MANAGER_NAME, voting_message))
+                votes[voted_for] += 1
         for player in voted_players:
             voting_players.remove(player)
     # if there were invalid votes or if there was a tie, decision will be made "randomly"
