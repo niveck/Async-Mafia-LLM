@@ -37,7 +37,9 @@ GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party g
 SCHEDULE_THEN_GENERATE_TYPE = "schedule_then_generate"
 GENERATE_THEN_SCHEDULE_TYPE = "generate_then_schedule"
 FINE_TUNED_TYPE = "fine_tuned"
-ASYNC_TYPES = [SCHEDULE_THEN_GENERATE_TYPE, GENERATE_THEN_SCHEDULE_TYPE, FINE_TUNED_TYPE]
+EVERY_X_MESSAGES_TYPE = "every_x_messages"
+ASYNC_TYPES = [SCHEDULE_THEN_GENERATE_TYPE, GENERATE_THEN_SCHEDULE_TYPE,
+               FINE_TUNED_TYPE, EVERY_X_MESSAGES_TYPE]
 DEFAULT_ASYNC_TYPE = ASYNC_TYPES[0]
 
 # config keys:
@@ -84,7 +86,7 @@ def turn_task_into_prompt(task, message_history):
     else:
         prompt = "Here is the message history so far, including [timestamps]:\n"
         prompt += "".join(message_history)  # each one already ends with "\n"
-    prompt += task.strip() + " "  # validates a " " is added before the next instruction
+    prompt += task.strip() + "\n"
     # not necessarily needed with all models, seemed relevant to Llama3.1:
     prompt += "Don't add the time, the timestamp or the [timestamp] in your answer!\n"
     return prompt

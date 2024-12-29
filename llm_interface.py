@@ -78,6 +78,8 @@ def add_message_to_game(player, message_history):
     if not player.is_mafia and is_nighttime(game_dir):
         return  # only mafia can communicate during nighttime
     message = player.generate_message(message_history).strip()
+    if is_time_to_vote(game_dir):
+        return  # sometimes the messages is generated when it's already too late, so drop it
     if message:
         player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
         with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
