@@ -30,6 +30,7 @@ def introducing_mafia_members(game_dir, is_mafia, name):
 
 
 def welcome_player(game_dir):
+    print(colored(PARTICIPATION_CONSENT_MESSAGE + "\n", CONSENT_COLOR))
     print(colored(WELCOME_MESSAGE + "\n", MANAGER_COLOR))
     print(colored(RULES_OF_THE_GAME_TITLE, MANAGER_COLOR, attrs=["underline"]))
     print(colored(RULES_OF_THE_GAME + "\n", MANAGER_COLOR))

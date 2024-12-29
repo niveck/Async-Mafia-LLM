@@ -102,6 +102,12 @@ NIGHTTIME_MINUTES_KEY = "nighttime_minutes"
 MANAGER_COLOR = "green"
 DAYTIME_COLOR = "light_blue"
 NIGHTTIME_COLOR = "red"
+CONSENT_COLOR = "grey"
+PARTICIPATION_CONSENT_MESSAGE = "Thank you for participating in our research. By participating " \
+                                "you are giving consent to use your input for research purposes, " \
+                                "such as analyzing the conversations text and publishing it as a " \
+                                "public dataset. Your true identity will remain anonymous, and " \
+                                "all personal details will not be saved!"
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"
