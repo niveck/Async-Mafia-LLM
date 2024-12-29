@@ -102,7 +102,7 @@ NIGHTTIME_MINUTES_KEY = "nighttime_minutes"
 MANAGER_COLOR = "green"
 DAYTIME_COLOR = "light_blue"
 NIGHTTIME_COLOR = "red"
-CONSENT_COLOR = "grey"
+CONSENT_COLOR = "light_grey"
 PARTICIPATION_CONSENT_MESSAGE = "Thank you for participating in our research. By participating " \
                                 "you are giving consent to use your input for research purposes, " \
                                 "such as analyzing the conversations text and publishing it as a " \
