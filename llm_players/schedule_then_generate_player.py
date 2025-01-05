@@ -94,7 +94,7 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                f"Don't add a message that you've already added (in the chat history)! " \
                f"It is very important that you don't repeat yourself! " \
                f"Match your style of message to the other player's message style, " \
-               f"with more emphasis on more recent messages.\n" \
+               f"with more emphasis on more recent messages.\n"  # \
                # f"Here are some examples of possible messages from a hypothetical game's chat, " \
                # f"as style inspiration:\n" \
                # f"\"I'm telling you guys, we can't trust Joseph\",\n" \
@@ -111,5 +111,4 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                # f"\"because they are the only one that didnt vote diane\",\n" \
                # f"\"i think Moe is so loud\",\n" \
                # f"\"jennifer, do you have anything to say for yourself?\"...\n" \
-               f""
         return turn_task_into_prompt(task, message_history)
