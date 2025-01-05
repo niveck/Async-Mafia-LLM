@@ -94,21 +94,21 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                f"Don't add a message that you've already added (in the chat history)! " \
                f"It is very important that you don't repeat yourself! " \
                f"Match your style of message to the other player's message style, " \
-               f"with more emphasis on more recent messages.\n"  # \
-               # f"Here are some examples of possible messages from a hypothetical game's chat, " \
-               # f"as style inspiration:\n" \
-               # f"\"I'm telling you guys, we can't trust Joseph\",\n" \
-               # f"\"Jessica is sus\",\n" \
-               # f"\"i think it is phoebe, she knew that diane was mafia and she tried to blame someone else\",\n" \
-               # f"\"John is probably mafia, diane was mafia and voted for lindsay who voted for john\",\n" \
-               # f"\"John is out tho\",\n" \
-               # f"\"i figured out diane is mafia\",\n" \
-               # f"\"jennifer is the mafia for sure! she didn't vote with us\",\n" \
-               # f"\"why would i kill mafia if i was mafia ?\",\n" \
-               # f"\"Jennifer is too quiet\",\n" \
-               # f"\"they only try to gain our trust\",\n" \
-               # f"\"exactly\",\n" \
-               # f"\"because they are the only one that didnt vote diane\",\n" \
-               # f"\"i think Moe is so loud\",\n" \
-               # f"\"jennifer, do you have anything to say for yourself?\"...\n" \
+               f"with more emphasis on more recent messages.\n"
+               f"Here are some examples of possible messages from a hypothetical game's chat, " \
+               f"as style inspiration:\n" \
+               f"\"I'm telling you guys, we can't trust Joseph\",\n" \
+               f"\"Jessica is sus\",\n" \
+               f"\"i think it is phoebe, she knew that diane was mafia and she tried to blame someone else\",\n" \
+               f"\"John is probably mafia, diane was mafia and voted for lindsay who voted for john\",\n" \
+               f"\"John is out tho\",\n" \
+               f"\"i figured out diane is mafia\",\n" \
+               f"\"jennifer is the mafia for sure! she didn't vote with us\",\n" \
+               f"\"why would i kill mafia if i was mafia ?\",\n" \
+               f"\"Jennifer is too quiet\",\n" \
+               f"\"they only try to gain our trust\",\n" \
+               f"\"exactly\",\n" \
+               f"\"because they are the only one that didnt vote diane\",\n" \
+               f"\"i think Moe is so loud\",\n" \
+               f"\"jennifer, do you have anything to say for yourself?\"...\n" \
         return turn_task_into_prompt(task, message_history)
