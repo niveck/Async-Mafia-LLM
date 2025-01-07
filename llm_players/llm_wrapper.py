@@ -3,7 +3,9 @@ from functools import cache
 from game_constants import get_current_timestamp
 from llm_players.llm_constants import TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, \
     INSTRUCTION_INPUT_RESPONSE_PATTERN, LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, NUM_BEAMS_KEY, \
-    MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO
+    MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO, \
+    REPETITION_PENALTY_KEY
+
 print("Trying to import torch...", get_current_timestamp())
 import torch
 print("Finished importing torch!", get_current_timestamp())
@@ -45,6 +47,7 @@ class LLMWrapper:
         self.use_pipeline = llm_config[USE_PIPELINE_KEY]
         self.pipeline_task = llm_config[PIPELINE_TASK_KEY]
         self.max_new_tokens = llm_config[MAX_NEW_TOKENS_KEY]
+        self.repetition_penalty = llm_config[REPETITION_PENALTY_KEY]
         self.num_beams = llm_config[NUM_BEAMS_KEY]
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.prompt_template = self._get_prompt_template()
@@ -126,7 +129,8 @@ class LLMWrapper:
                 self.logger.log("messages in generate with self.use_pipeline", messages)
                 outputs = self.pipeline(messages,
                                         max_new_tokens=self.max_new_tokens,
-                                        num_beams=self.num_beams)
+                                        num_beams=self.num_beams,
+                                        repetition_penalty=self.repetition_penalty)
                 self.logger.log("outputs in generate with self.use_pipeline", outputs)
                 final_output = outputs[0][TASK2OUTPUT_FORMAT[self.pipeline_task]][-1]
             else:
@@ -137,7 +141,8 @@ class LLMWrapper:
                 outputs = self.model.generate(**inputs,
                                               # max_length=self.max_source_length,
                                               max_new_tokens=self.max_new_tokens,
-                                              num_beams=self.num_beams)
+                                              num_beams=self.num_beams,
+                                              repetition_penalty=self.repetition_penalty)
                 decoded_output = self.tokenizer.decode(outputs[0])
                 self.logger.log("decoded_output in generate directly", decoded_output)
                 final_output = self.direct_postprocessing(decoded_output)

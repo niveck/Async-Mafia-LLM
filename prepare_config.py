@@ -42,8 +42,8 @@ from game_constants import DEFAULT_CONFIG_DIR, DEFAULT_NUM_PLAYERS, DEFAULT_NUM_
     MINIMUM_NUM_PLAYERS_FOR_ONE_MAFIA, MINIMUM_NUM_PLAYERS_FOR_MULT_MAFIA, OPTIONAL_CODE_NAMES, \
     WARNING_LIMIT_NUM_MAFIA, PLAYERS_KEY_IN_CONFIG, DEFAULT_DAYTIME_MINUTES, \
     DEFAULT_NIGHTTIME_MINUTES, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY
-from llm_players.llm_constants import INT_CONFIG_KEYS, USE_PIPELINE_KEY, DEFAULT_LLM_CONFIG, \
-    LLM_CONFIG_KEYS_OPTIONS
+from llm_players.llm_constants import INT_CONFIG_KEYS, FLOAT_CONFIG_KEYS, DEFAULT_LLM_CONFIG, \
+    LLM_CONFIG_KEYS_OPTIONS, BOOL_CONFIG_KEYS
 
 LLM_CONFIG_KEYS_INDEXED_OPTIONS = {
     key: {f"{i}": option for (i, option) in enumerate(options)}
@@ -159,7 +159,9 @@ def get_llm_config(llm_numbered_symbol, args):
                 key = index2key[index]
                 if key in INT_CONFIG_KEYS:
                     llm_config[key] = int(input(f"Enter a new number for {key}: "))
-                elif key in USE_PIPELINE_KEY:
+                elif key in FLOAT_CONFIG_KEYS:
+                    llm_config[key] = float(input(f"Enter a new value for {key}: "))
+                elif key in BOOL_CONFIG_KEYS:
                     llm_config[key] = eval(input(f"Enter True/False for {key}: ").capitalize())
                 else:
                     choice = None

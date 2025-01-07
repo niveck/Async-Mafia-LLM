@@ -48,7 +48,9 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         if self.should_generate_message(message_history):
             prompt = self.create_generation_prompt(message_history)
             self.logger.log("prompt in generate_message", prompt)
-            message = self.llm.generate(prompt, self.get_system_info_message())
+            system_info = (self.get_system_info_message() + "Note: Do not repeat any messages "
+                           "already present in the message history below!\n")
+            message = self.llm.generate(prompt, system_info)
             message = make_more_human_like(message)
             return message
         else:

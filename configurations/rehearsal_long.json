@@ -25,6 +25,7 @@
                 "pipeline_task": "text-generation",
                 "max_new_tokens": 100,
                 "num_beams": 4,
+                "repetition_penalty": 1.3,
                 "num_words_per_second_to_wait": 3,
                 "pass_turn_token": "<wait>",
                 "use_turn_token": "<send>",
