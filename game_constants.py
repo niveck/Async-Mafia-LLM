@@ -148,7 +148,8 @@ METRIC_NAME_AND_SCORE_DELIMITER = " - "
 DEFAULT_SCORE_LOW_BOUND = 1
 DEFAULT_SCORE_HIGH_BOUND = 5
 SURVEY_QUESTION_FORMAT = "How would you score {}'s"
-NUMERIC_SURVEY_QUESTION_FORMAT = "Please provide an *integer* answer between {} and {}, including: "
+NUMERIC_SURVEY_QUESTION_FORMAT = "Please provide an *integer* answer between " \
+                                 "{} (worst) and {} (best), including: "
 LLM_IDENTIFICATION_SURVEY_MESSAGE = "Which of the players do you think the LLM was?"
 CORRECT_GUESS_MESSAGE = "This is correct!"
 WRONG_GUESS_MESSAGE = "This is wrong!"

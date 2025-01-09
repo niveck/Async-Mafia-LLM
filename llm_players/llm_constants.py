@@ -11,13 +11,6 @@ INSTRUCTION_INPUT_RESPONSE_PATTERN = "instruction-input-response prompt pattern"
 LLAMA3_PATTERN = "Llama 3 pattern"
 DEFAULT_PROMPT_PATTERN = "default"
 
-# generation hyper parameters:
-DEFAULT_MAX_NEW_TOKENS = 100
-DEFAULT_NUM_BEAMS = 4
-DEFAULT_REPETITION_PENALTY = 1.3
-
-DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates number of words written normally per second
-
 # pipeline formats:
 TEXT_GENERATION_TASK = "text-generation"
 TASK2OUTPUT_FORMAT = {TEXT_GENERATION_TASK: "generated_text"}
@@ -49,17 +42,34 @@ GAME_DIR_KEY = "game_dir"  # should match key word in LLMPlayer
 MODEL_NAME_KEY = "model_name"
 USE_PIPELINE_KEY = "use_pipeline"
 PIPELINE_TASK_KEY = "pipeline_task"
-MAX_NEW_TOKENS_KEY = "max_new_tokens"
-NUM_BEAMS_KEY = "num_beams"
-REPETITION_PENALTY_KEY = "repetition_penalty"
 WORDS_PER_SECOND_WAITING_KEY = "num_words_per_second_to_wait"
 PASS_TURN_TOKEN_KEY = "pass_turn_token"
 USE_TURN_TOKEN_KEY = "use_turn_token"
 ASYNC_TYPE_KEY = "async_type"
+# generation hyper parameters:
+MAX_NEW_TOKENS_KEY = "max_new_tokens"
+NUM_BEAMS_KEY = "num_beams"
+REPETITION_PENALTY_KEY = "repetition_penalty"
+DO_SAMPLE_KEY = "do_sample"
+TEMPERATURE_KEY = "temperature"
+NO_REPEAT_NGRAM_KEY = "no_repeat_ngram_size"
+GENERATION_PARAMETERS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, REPETITION_PENALTY_KEY,
+                         DO_SAMPLE_KEY, TEMPERATURE_KEY, NO_REPEAT_NGRAM_KEY]
 
-INT_CONFIG_KEYS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, WORDS_PER_SECOND_WAITING_KEY]
-FLOAT_CONFIG_KEYS = [REPETITION_PENALTY_KEY]
-BOOL_CONFIG_KEYS = [USE_PIPELINE_KEY]
+INT_CONFIG_KEYS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, WORDS_PER_SECOND_WAITING_KEY,
+                   NO_REPEAT_NGRAM_KEY]
+FLOAT_CONFIG_KEYS = [REPETITION_PENALTY_KEY, TEMPERATURE_KEY]
+BOOL_CONFIG_KEYS = [USE_PIPELINE_KEY, DO_SAMPLE_KEY]
+
+# default values
+DEFAULT_MAX_NEW_TOKENS = 25
+DEFAULT_NUM_BEAMS = 1  # 4
+DEFAULT_REPETITION_PENALTY = 1.3
+DEFAULT_DO_SAMPLE = True
+DEFAULT_TEMPERATURE = 1.3
+DEFAULT_NO_REPEAT_NGRAM = 8
+
+DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates number of words written normally per second
 
 DEFAULT_LLM_CONFIG = {
     MODEL_NAME_KEY: DEFAULT_MODEL_NAME,
@@ -68,6 +78,9 @@ DEFAULT_LLM_CONFIG = {
     MAX_NEW_TOKENS_KEY: DEFAULT_MAX_NEW_TOKENS,
     NUM_BEAMS_KEY: DEFAULT_NUM_BEAMS,
     REPETITION_PENALTY_KEY: DEFAULT_REPETITION_PENALTY,
+    DO_SAMPLE_KEY: DEFAULT_DO_SAMPLE,
+    TEMPERATURE_KEY: DEFAULT_TEMPERATURE,
+    NO_REPEAT_NGRAM_KEY: DEFAULT_NO_REPEAT_NGRAM,
     WORDS_PER_SECOND_WAITING_KEY: DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT,
     PASS_TURN_TOKEN_KEY: DEFAULT_PASS_TURN_TOKEN,
     USE_TURN_TOKEN_KEY: DEFAULT_USE_TURN_TOKEN,
@@ -100,4 +113,5 @@ def make_more_human_like(message):
     if message.endswith(".") and not message.endswith(".."):
         # remove the formal style of ending sentences with ".", with no effect over multiple dots
         message = message[:-1]
-    return message.capitalize()  # Leaves only the first character in caps (which is still common)
+    # return message.capitalize()  # Leaves only the first character in caps (which is still common)
+    return message.lower()

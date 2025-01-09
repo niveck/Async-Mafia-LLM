@@ -1,4 +1,3 @@
-# TODO: maybe use the portalocker library to prevent permission errors - read about it and whether it waits when file is locked or just skips
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_game_over, is_time_to_vote, all_players_joined, get_is_mafia, \
     is_nighttime

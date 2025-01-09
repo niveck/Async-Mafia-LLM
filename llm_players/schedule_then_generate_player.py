@@ -33,7 +33,7 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         super().__init__(**kwargs)
         # scheduler_kwargs = kwargs.get("scheduler_kwargs", kwargs)
         # self.scheduler = LLMWrapper(**scheduler_kwargs)
-        self.scheduler = self.llm  # trying to use the same one for generation...
+        self.scheduler = self.llm  # using the same one for generation...
 
     def should_generate_message(self, message_history):
         if no_one_has_talked_yet_in_current_phase(message_history):
@@ -48,9 +48,8 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
         if self.should_generate_message(message_history):
             prompt = self.create_generation_prompt(message_history)
             self.logger.log("prompt in generate_message", prompt)
-            system_info = (self.get_system_info_message() + "Note: Do not repeat any messages "
-                           "already present in the message history below!\n")
-            message = self.llm.generate(prompt, system_info)
+            message = self.llm.generate(
+                prompt, self.get_system_info_message(attention_to_not_repeat=True))
             message = make_more_human_like(message)
             return message
         else:

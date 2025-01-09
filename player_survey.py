@@ -44,7 +44,7 @@ def run_survey_about_llm_player(game_dir, name):
     print()
     llm_player_name = get_llm_player_name(game_dir)
     if llm_player_name:
-        llm_identity_survey(game_dir, llm_player_name, name)  # todo this part should be tested and debugged
+        llm_identity_survey(game_dir, llm_player_name, name)
         for metric in METRICS_TO_SCORE:
             answer = ask_player_for_numeric_rank(llm_player_name, metric)
             print()
