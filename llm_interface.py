@@ -50,8 +50,12 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
-        num_words = len(message.split())
-        time.sleep(num_words // player.num_words_per_second_to_wait)
+        # TODO: leave only working part
+        # It was originally num words per second, but now I changed it to be treated as num chars per second
+        # num_words = len(message.split())
+        # time.sleep(num_words // player.num_words_per_second_to_wait)
+        # treated as num chars per second to wait:
+        time.sleep(len(message) // player.num_words_per_second_to_wait)
 
 
 def eliminate(player):
@@ -82,11 +86,11 @@ def add_message_to_game(player, message_history):
         return  # sometimes the messages is generated when it's already too late, so drop it
     if message:
         player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
+        # artificially making the model taking time to write the message
+        wait_writing_time(player, message)
         with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
             f.write(format_message(player.name, message))
         print(colored(MODEL_CHOSE_TO_USE_TURN_LOG, OPERATOR_COLOR))
-        # artificially making the model taking time to write the message
-        wait_writing_time(player, message)
     else:
         player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_PASS_TURN_LOG)
         print(colored(MODEL_CHOSE_TO_PASS_TURN_LOG, OPERATOR_COLOR))
