@@ -121,12 +121,14 @@ class LLMWrapper:
         else:
             raise NotImplementedError("Missing output template for used model")
 
-    def generate(self, input_text, system_info=""):
+    def generate(self, input_text, system_info="", generation_parameters=None):
+        if generation_parameters is None:
+            generation_parameters = self.generation_parameters
         with torch.inference_mode():
             if self.use_pipeline:
                 messages = self.pipeline_preprocessing(input_text, system_info)
                 self.logger.log("messages in generate with self.use_pipeline", messages)
-                outputs = self.pipeline(messages, **self.generation_parameters)
+                outputs = self.pipeline(messages, **generation_parameters)
                 self.logger.log("outputs in generate with self.use_pipeline", outputs)
                 final_output = outputs[0][TASK2OUTPUT_FORMAT[self.pipeline_task]][-1]
             else:
@@ -134,7 +136,7 @@ class LLMWrapper:
                 self.logger.log("prompt in generate directly", prompt)
                 inputs = self.tokenizer(prompt, return_tensors="pt")
                 inputs = {key: value.to(self.device) for key, value in inputs.items()}
-                outputs = self.model.generate(**inputs, **self.generation_parameters)
+                outputs = self.model.generate(**inputs, **generation_parameters)
                 decoded_output = self.tokenizer.decode(outputs[0])
                 self.logger.log("decoded_output in generate directly", decoded_output)
                 final_output = self.direct_postprocessing(decoded_output)

@@ -17,8 +17,13 @@ TASK2OUTPUT_FORMAT = {TEXT_GENERATION_TASK: "generated_text"}
 
 # text constants:
 INITIAL_GENERATION_PROMPT = "Do you understand the rules?"
-PASS_TURN_TOKEN_OPTIONS = ["<wait>", "<pass>", "<quiet>", "[[wait]]", "[[pass]]", "[[quiet]]"]
-USE_TURN_TOKEN_OPTIONS = ["<send>", "<speak>", "<use>", "[[send]]", "[[speak]]", "[[use]]"]
+SPECIAL_TOKEN_FORMATS = ["<{}>", "[[{}]]", "{}"]
+PASS_TURN_KEYWORD = ["wait", "pass", "quiet"]
+PASS_TURN_TOKEN_OPTIONS = [pattern.format(keyword) for keyword in PASS_TURN_KEYWORD
+                           for pattern in SPECIAL_TOKEN_FORMATS]
+USE_TURN_KEYWORD = ["send", "speak", "use"]
+USE_TURN_TOKEN_OPTIONS = [pattern.format(keyword) for keyword in USE_TURN_KEYWORD
+                          for pattern in SPECIAL_TOKEN_FORMATS]
 DEFAULT_PASS_TURN_TOKEN = PASS_TURN_TOKEN_OPTIONS[0]
 DEFAULT_USE_TURN_TOKEN = USE_TURN_TOKEN_OPTIONS[0]
 GENERAL_SYSTEM_INFO = f"You are a bot player in an online version of the party game Mafia. " \
@@ -64,7 +69,7 @@ BOOL_CONFIG_KEYS = [USE_PIPELINE_KEY, DO_SAMPLE_KEY]
 # default values
 DEFAULT_MAX_NEW_TOKENS = 25
 DEFAULT_NUM_BEAMS = 1  # 4
-DEFAULT_REPETITION_PENALTY = 1.3
+DEFAULT_REPETITION_PENALTY = 1.25
 DEFAULT_DO_SAMPLE = True
 DEFAULT_TEMPERATURE = 1.3
 DEFAULT_NO_REPEAT_NGRAM = 8
@@ -93,6 +98,11 @@ LLM_CONFIG_KEYS_OPTIONS = {
     PASS_TURN_TOKEN_KEY: PASS_TURN_TOKEN_OPTIONS,
     USE_TURN_TOKEN_KEY: USE_TURN_TOKEN_OPTIONS,
     ASYNC_TYPE_KEY: ASYNC_TYPES
+}
+
+SCHEDULING_GENERATION_PARAMETERS = {
+    MAX_NEW_TOKENS_KEY: 7,  # [[speak]] for example requires 5, <speak> requires 4, and there is also <|end_of_text|>
+    REPETITION_PENALTY_KEY: 0.9  # reward tokens it has already seen, like the special tokens
 }
 
 

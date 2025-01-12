@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from game_constants import get_role_string, GAME_START_TIME_FILE, PERSONAL_CHAT_FILE_FORMAT, \
     MESSAGE_PARSING_PATTERN
 from llm_players.llm_constants import turn_task_into_prompt, GENERAL_SYSTEM_INFO, \
-    PASS_TURN_TOKEN_KEY, USE_TURN_TOKEN_KEY, WORDS_PER_SECOND_WAITING_KEY
+    PASS_TURN_TOKEN_KEY, USE_TURN_TOKEN_KEY, WORDS_PER_SECOND_WAITING_KEY, PASS_TURN_TOKEN_OPTIONS
 from llm_players.llm_wrapper import LLMWrapper
 from llm_players.logger import Logger
 
@@ -23,7 +23,7 @@ class LLMPlayer(ABC):
         self.num_words_per_second_to_wait = llm_config[WORDS_PER_SECOND_WAITING_KEY]
         self.llm = LLMWrapper(self.logger, **llm_config)
 
-    def get_system_info_message(self, attention_to_not_repeat=False):
+    def get_system_info_message(self, attention_to_not_repeat=False, only_special_tokens=False):
         system_info = f"Your name is {self.name}. {GENERAL_SYSTEM_INFO}\n" \
                       f"You were assigned the following role: {self.role}.\n"
         chat_room_open_time = (self.game_dir / GAME_START_TIME_FILE).read_text().strip()
@@ -53,6 +53,15 @@ class LLMPlayer(ABC):
                         continue
                     message_content = matcher.group(5)  # depends on MESSAGE_PARSING_PATTERN
                     system_info += f"* \"{message_content}\"\n"
+        if only_special_tokens:
+            system_info += f"You can ONLY respond with one of two possible outputs:\n" \
+                           f"{self.pass_turn_token} - indicating your character in the game " \
+                           f"should wait and not send a message in the current timing\n" \
+                           f"{self.use_turn_token} - indicating your character in the game should" \
+                           f"send a message to the public chat now\n\n" \
+                           f"You must NEVER output any other text, explanations, or variations " \
+                           f"of these tokens. Only these exact tokens are allowed: " \
+                           f"{self.pass_turn_token} or {self.use_turn_token}.\n"
         return system_info
 
     @abstractmethod
@@ -62,6 +71,19 @@ class LLMPlayer(ABC):
     @abstractmethod
     def generate_message(self, message_history):
         raise NotImplementedError()
+
+    def interpret_scheduling_decision(self, decision):
+        if not decision:
+            return False
+        elif self.pass_turn_token in decision:
+            return False
+        elif self.use_turn_token in decision:
+            return True
+        # for more robustness:
+        elif any([option in decision for option in PASS_TURN_TOKEN_OPTIONS]):
+            return False
+        else:
+            return True
 
     def get_vote(self, message_history, candidate_vote_names):
         task = f"From the following remaining players, which player you want to vote for " \

@@ -17,7 +17,7 @@ class FineTunedPlayer(LLMPlayer):  # TODO: use self.logger
         raise NotImplementedError()  # TODO implement! involves pre processing of the messages!
 
     def should_generate_message(self, potential_answer):
-        return bool(potential_answer) and self.pass_turn_token not in potential_answer
+        return self.interpret_scheduling_decision(potential_answer)
 
     def generate_message(self, message_history):
         prompt = self.create_prompt(message_history)
