@@ -77,7 +77,7 @@
     ],
     "daytime_minutes": 3,
     "nighttime_minutes": 1,
-    "notes": "",
+    "notes": "The game in A400 where the model got stuck in a loop",
     "preparation_command": "prepare_config.py -p 9 -n configurations/name_files/090125.txt",
     "config_original_path_when_game_created": "configurations/config090125_1105.json"
 }
