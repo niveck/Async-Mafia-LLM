@@ -140,4 +140,4 @@ class LLMWrapper:
                 decoded_output = self.tokenizer.decode(outputs[0])
                 self.logger.log("decoded_output in generate directly", decoded_output)
                 final_output = self.direct_postprocessing(decoded_output)
-        return final_output.strip()
+        return final_output.replace("\n", "   ").strip()

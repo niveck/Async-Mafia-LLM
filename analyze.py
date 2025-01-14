@@ -177,19 +177,22 @@ def get_single_game_results(game_id):
     human_players = [player for player in all_players if player != llm_player_name]
     all_metrics = [LLM_IDENTIFICATION] + METRICS_TO_SCORE
     metrics_results = {metric: [] for metric in all_metrics}
+    all_comments = []
     for player_name in human_players:
         survey_results = get_survey_results(game_dir, player_name, all_metrics)
         for metric in all_metrics:
             # in case there was a problem and not all metrics were scored
             if metric in survey_results:
                 metrics_results[metric].append(survey_results[metric])
+        if SURVEY_COMMENTS_TITLE in survey_results:
+            all_comments.append(survey_results[SURVEY_COMMENTS_TITLE])
     parsed_messages_by_phase = parse_messages(game_dir, all_players, mafia_players, llm_player_name)
     was_llm_voted_out = is_voted_out(llm_player_name, game_dir)
     is_llm_mafia = llm_player_name in mafia_players
     did_mafia_win = MAFIA_WINS_MESSAGE in (game_dir / WHO_WINS_FILE).read_text()
     did_llm_win = did_mafia_win == is_llm_mafia
     return llm_player_name, all_players, mafia_players, human_players, llm_config, \
-        metrics_results, parsed_messages_by_phase, was_llm_voted_out, is_llm_mafia, \
+        metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, is_llm_mafia, \
         did_mafia_win, did_llm_win  # num_daytime_phases, num_nighttime_phases, and more from doc - will be in the next function to analyze
 
 
@@ -349,10 +352,12 @@ def plot_all_pie_charts(did_mafia_win_all_games, did_llm_win_all_games,
             did_llm_win_as_mafia.append(did_llm_win_all_games[i])
         else:
             did_llm_win_as_bystander.append(did_llm_win_all_games[i])
-    plot_single_pie_chart("LLM win percentage out of games played as mafia", did_llm_win_as_mafia,
-                          "LLM win as mafia", "LLM lose as mafia")
-    plot_single_pie_chart("LLM win percentage out of games played as bystander",
-                          did_llm_win_as_bystander, "LLM win as bystander", "LLM lose as bystander")
+    if did_llm_win_as_mafia:
+        plot_single_pie_chart("LLM win percentage out of games played as mafia",
+                              did_llm_win_as_mafia, "LLM win as mafia", "LLM lose as mafia")
+    if did_llm_win_as_bystander:
+        plot_single_pie_chart("LLM win percentage out of games played as bystander",
+                              did_llm_win_as_bystander, "LLM win as bystander", "LLM lose as bystander")
     # TODO add one of was the LLM identified, and the one conditional of was it identified out of playing as mafia/bystander separately
 
 
@@ -382,8 +387,8 @@ def plot_scores_for_single_metric(metric, scores_by_game):
 
 def plot_metric_scores(metrics_results_all_games):
     metrics = list(metrics_results_all_games.keys())  # to ensure order
-    if LLM_IDENTIFICATION in metrics:  # TODO: cancel this removal after the question is back in games!
-        metrics.remove(LLM_IDENTIFICATION)
+    # if LLM_IDENTIFICATION in metrics:  # TODO: cancel this removal after the question is back in games!
+    #     metrics.remove(LLM_IDENTIFICATION)
     means_by_metrics = []
     stds_by_metrics = []
     for metric in metrics:
@@ -400,8 +405,8 @@ def plot_metric_scores(metrics_results_all_games):
 
 
 def main():
-    game_ids = ["0036", "0037", "0027", "0028", "0030", "0032"]
-    # game_ids = ["0030"]
+    # game_ids = ["0036", "0037", "0027", "0028", "0030", "0032"]
+    game_ids = ["0051"]
 
     hist_for_daytime_phases = True
     hist_for_nighttime_phases = False
@@ -416,8 +421,15 @@ def main():
     for game_id in game_ids:
 
         llm_player_name, all_players, mafia_players, human_players, llm_config, \
-            metrics_results, parsed_messages_by_phase, was_llm_voted_out, is_llm_mafia, \
-            did_mafia_win, did_llm_win = get_single_game_results(game_id)
+            metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, \
+            is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
+
+        (ANALYSIS_DIR / ("game" + game_id + "_comments.txt")).write_text("\n".join(all_comments))
+
+        if LLM_IDENTIFICATION in metrics_results:
+            plot_single_pie_chart(f"Percentage of LLM identification in game {game_id}",
+                                  metrics_results[LLM_IDENTIFICATION],
+                                  "LLM was identified", "LLM was not identified")
 
         did_mafia_win_all_games.append(did_mafia_win)
         did_llm_win_all_games.append(did_llm_win)
@@ -449,8 +461,8 @@ def main():
     human_only_reset_message_lengths_across_all_games = []
     for game_id in game_ids:  # Yes, I'm aware this is currently repetition of calculation...
         llm_player_name, all_players, mafia_players, human_players, llm_config, \
-            metrics_results, parsed_messages_by_phase, was_llm_voted_out, is_llm_mafia, \
-            did_mafia_win, did_llm_win = get_single_game_results(game_id)
+            metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, \
+            is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
         player_message_lengths = plot_messages_histogram_in_phase(
             [llm_player_name], parsed_messages_by_phase, game_id=game_id,
             llm_player_name=llm_player_name, plot_general_histogram=False, plot_for_each_player=False,
