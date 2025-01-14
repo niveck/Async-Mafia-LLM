@@ -79,9 +79,9 @@ def parse_args():
                         help="whether to edit the default LLM configuration")
     parser.add_argument("-j", "--llm_config_json_path", default=None,
                         help="optional path to LLM configuration as json (has to be complete)")
-    parser.add_argument("-dt", "--daytime_minutes", type=int, default=DEFAULT_DAYTIME_MINUTES,
+    parser.add_argument("-dt", "--daytime_minutes", type=float, default=DEFAULT_DAYTIME_MINUTES,
                         help="number of minutes for Daytime phase")
-    parser.add_argument("-nt", "--nighttime_minutes", type=int, default=DEFAULT_NIGHTTIME_MINUTES,
+    parser.add_argument("-nt", "--nighttime_minutes", type=float, default=DEFAULT_NIGHTTIME_MINUTES,
                         help="number of minutes for Nighttime phase")
     args = parser.parse_args()
     return args

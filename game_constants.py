@@ -94,7 +94,7 @@ OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by C
     "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 random.shuffle(OPTIONAL_CODE_NAMES)  # without it some names are sampled too often...
 DEFAULT_NIGHTTIME_MINUTES = 1  # like in Ibraheem et al. 2022
-DEFAULT_DAYTIME_MINUTES = 3  # it was 2:30 in Ibraheem et al. 2022
+DEFAULT_DAYTIME_MINUTES = 2.5  # 3  # it was 2:30 in Ibraheem et al. 2022
 DAYTIME_MINUTES_KEY = "daytime_minutes"
 NIGHTTIME_MINUTES_KEY = "nighttime_minutes"
 
