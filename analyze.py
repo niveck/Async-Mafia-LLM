@@ -280,7 +280,8 @@ def plot_messages_histogram_in_phase(all_players, phases: list[Phase], game_id=N
             player_label = player + " (LLM)" if player == llm_player_name else player
             title = f"Messages histogram of {player_label} for {phase_in_title}" + game_in_title
             plt.title(title)
-            plt.bar(*zip(*player_message_lengths[player]), width=7, color=color, alpha=0.3)
+            messages_lengths = player_message_lengths[player] if player_message_lengths[player] else [(0, 0)]
+            plt.bar(*zip(*messages_lengths), width=7, color=color, alpha=0.3)
             plt.xlim(min(all_timestamps) - 10, max(all_timestamps) + 10)
             plt.ylim(MESSAGE_HISTOGRAM_Y_LIM)
             plt.xlabel("timestamp")
@@ -289,7 +290,8 @@ def plot_messages_histogram_in_phase(all_players, phases: list[Phase], game_id=N
             plt.show()
     if plot_general_histogram:
         for player in all_players:
-            plt.bar(*zip(*player_message_lengths[player]), width=7, color=color, alpha=0.3)
+            messages_lengths = player_message_lengths[player] if player_message_lengths[player] else [(0, 0)]
+            plt.bar(*zip(*messages_lengths), width=7, color=color, alpha=0.3)
         title = f"Unified Messages histogram for {phase_in_title}" + game_in_title
         plt.title(title)
         if plot_for_each_player:  # do it will be easy to compare
@@ -406,7 +408,8 @@ def plot_metric_scores(metrics_results_all_games):
 
 def main():
     # game_ids = ["0036", "0037", "0027", "0028", "0030", "0032"]
-    game_ids = ["0051"]
+    # game_ids = ["0051"]
+    game_ids = ["0051", "0056", "0057", "0058", "0059", "0060"]
 
     hist_for_daytime_phases = True
     hist_for_nighttime_phases = False
