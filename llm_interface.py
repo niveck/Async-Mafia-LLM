@@ -3,7 +3,7 @@ from game_constants import *  # incl. argparse, time, Path (from pathlib), color
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined
 from llm_players.factory import llm_player_factory
-from llm_players.llm_constants import GAME_DIR_KEY
+from llm_players.llm_constants import GAME_DIR_KEY, VOTING_WAITING_TIME
 
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
@@ -51,7 +51,8 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
         num_words = len(message.split())
-        time.sleep(num_words // player.num_words_per_second_to_wait)
+        # time.sleep(num_words // player.num_words_per_second_to_wait)
+        time.sleep(num_words // player.num_words_per_second_to_wait + 2)
         # TODO: leave only working part
         # # It was originally num words per second, but now I changed it to be treated as num chars per second
         # # treated as num chars per second to wait:
@@ -69,6 +70,7 @@ def get_vote_from_llm(player, message_history):
     voting_message = player.get_vote(message_history, candidate_vote_names)
     for name in candidate_vote_names:
         if name in voting_message:  # update game manger
+            time.sleep(VOTING_WAITING_TIME)
             with open(game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name), "a") as f:
                 f.write(name + "\n")
             print(colored(LLM_VOTE_MESSAGE_FORMAT.format(name), OPERATOR_COLOR))
