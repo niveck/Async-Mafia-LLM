@@ -8,7 +8,7 @@
     "do_sample": true,
     "temperature": 1.3,
     "no_repeat_ngram_size": 8,
-    "num_words_per_second_to_wait": 3,
+    "num_words_per_second_to_wait": 2,
     "pass_turn_token": "<wait>",
     "use_turn_token": "<send>",
     "async_type": "every_x_messages"
