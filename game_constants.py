@@ -93,8 +93,8 @@ OPTIONAL_CODE_NAMES = [  # I've tried using mainly unisex names, as suggest by C
     "Ray", "Reese", "Remi", "Riley", "River", "Robin", "Ronny", "Rowan", "Sage", "Sam", "Sidney",
     "Skylar", "Stevie", "Sutton", "Terry", "Tyler", "Whitney", "Winter", "Ziggy"]
 random.shuffle(OPTIONAL_CODE_NAMES)  # without it some names are sampled too often...
-DEFAULT_NIGHTTIME_MINUTES = 1  # like in Ibraheem et al. 2022
-DEFAULT_DAYTIME_MINUTES = 2.5  # 3  # it was 2:30 in Ibraheem et al. 2022
+DEFAULT_NIGHTTIME_MINUTES = 0.75  # 1  # like in Ibraheem et al. 2022
+DEFAULT_DAYTIME_MINUTES = 2  # 2.5  # 3  # it was 2:30 in Ibraheem et al. 2022
 DAYTIME_MINUTES_KEY = "daytime_minutes"
 NIGHTTIME_MINUTES_KEY = "nighttime_minutes"
 
@@ -196,13 +196,13 @@ def get_game_dir_from_argv():
 
 
 def get_player_names_by_id(player_names):
-    return {f"{i}": name for i, name in enumerate(player_names) if name}
+    return {f"{i + 1}": name for i, name in enumerate(player_names) if name}
 
 
 def get_player_name_from_user(optional_player_names, input_message, message_color=MANAGER_COLOR):
     player_names_by_id = get_player_names_by_id(optional_player_names)
     name_id = ""
-    enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
+    enumerated_names = ",   ".join([f"{i + 1}: {name}" for i, name in player_names_by_id.items()])
     while name_id not in player_names_by_id:
         name_id = input(colored(f"{input_message}\n{enumerated_names}\n", message_color))
     name = player_names_by_id[name_id]

@@ -50,12 +50,12 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
+        num_words = len(message.split())
+        time.sleep(num_words // player.num_words_per_second_to_wait)
         # TODO: leave only working part
-        # It was originally num words per second, but now I changed it to be treated as num chars per second
-        # num_words = len(message.split())
-        # time.sleep(num_words // player.num_words_per_second_to_wait)
-        # treated as num chars per second to wait:
-        time.sleep(len(message) // player.num_words_per_second_to_wait)
+        # # It was originally num words per second, but now I changed it to be treated as num chars per second
+        # # treated as num chars per second to wait:
+        # time.sleep(len(message) // player.num_words_per_second_to_wait)
 
 
 def eliminate(player):
@@ -79,7 +79,8 @@ def get_vote_from_llm(player, message_history):
 
 
 def add_message_to_game(player, message_history):
-    if not player.is_mafia and is_nighttime(game_dir):
+    is_nighttime_at_start = is_nighttime(game_dir)
+    if not player.is_mafia and is_nighttime_at_start:
         return  # only mafia can communicate during nighttime
     message = player.generate_message(message_history).strip()
     if is_time_to_vote(game_dir):
@@ -88,6 +89,8 @@ def add_message_to_game(player, message_history):
         player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
         # artificially making the model taking time to write the message
         wait_writing_time(player, message)
+        if is_nighttime(game_dir) != is_nighttime_at_start:
+            return  # waited for too long
         with open(game_dir / PERSONAL_CHAT_FILE_FORMAT.format(player.name), "a") as f:
             f.write(format_message(player.name, message))
         print(colored(MODEL_CHOSE_TO_USE_TURN_LOG, OPERATOR_COLOR))

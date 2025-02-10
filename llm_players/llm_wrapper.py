@@ -116,6 +116,8 @@ class LLMWrapper:
             decoded_output = decoded_output.split("<|eot_id|>")[0].split("<|end_of_text|>")[0].strip()
             if decoded_output and decoded_output[0] == ":":
                 decoded_output = decoded_output[1:]
+            if "<|eom_id|>" in decoded_output:
+                decoded_output = decoded_output.split("<|eom_id|>")[0].strip()
             return decoded_output
         # elif  # TODO: add an option for the fine-tuned model based on its training format!
         else:

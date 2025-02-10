@@ -74,7 +74,7 @@ DEFAULT_DO_SAMPLE = True
 DEFAULT_TEMPERATURE = 1.3
 DEFAULT_NO_REPEAT_NGRAM = 8
 
-DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 3  # simulates number of words written normally per second
+DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 2  # simulates number of words written normally per second
 
 DEFAULT_LLM_CONFIG = {
     MODEL_NAME_KEY: DEFAULT_MODEL_NAME,
