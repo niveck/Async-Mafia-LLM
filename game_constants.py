@@ -202,7 +202,7 @@ def get_player_names_by_id(player_names):
 def get_player_name_from_user(optional_player_names, input_message, message_color=MANAGER_COLOR):
     player_names_by_id = get_player_names_by_id(optional_player_names)
     name_id = ""
-    enumerated_names = ",   ".join([f"{i + 1}: {name}" for i, name in player_names_by_id.items()])
+    enumerated_names = ",   ".join([f"{i}: {name}" for i, name in player_names_by_id.items()])
     while name_id not in player_names_by_id:
         name_id = input(colored(f"{input_message}\n{enumerated_names}\n", message_color))
     name = player_names_by_id[name_id]
