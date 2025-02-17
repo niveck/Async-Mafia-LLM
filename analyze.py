@@ -201,7 +201,8 @@ def plot_game_flow(game_id, all_players, parsed_messages_by_phase: list[Phase], 
     player_voted_out = {player: None for player in all_players}
     player_color = {player: f"C{i}" for i, player in enumerate(all_players)}
     if "C10" in player_color.values():
-        raise UserWarning("More than 10 players, which means repetition of colors in plot")
+        # raise UserWarning("More than 10 players, which means repetition of colors in plot")
+        print(UserWarning("More than 10 players, which means repetition of colors in plot"))
     title = f"Game {game_id} Flow"
     plt.title(title)
     all_timestamps = []
@@ -409,7 +410,8 @@ def plot_metric_scores(metrics_results_all_games):
 def main():
     # game_ids = ["0036", "0037", "0027", "0028", "0030", "0032"]
     # game_ids = ["0051"]
-    game_ids = ["0051", "0056", "0057", "0058", "0059", "0060"]
+    # game_ids = ["0051", "0056", "0057", "0058", "0059", "0060"]
+    game_ids = ["0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073"]
 
     hist_for_daytime_phases = True
     hist_for_nighttime_phases = False
