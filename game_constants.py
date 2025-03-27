@@ -46,14 +46,14 @@ MAFIA_WINS_MESSAGE = "Mafia wins!"
 BYSTANDERS_WIN_MESSAGE = "Bystanders win!"
 GAME_MANAGER_NAME = "Game-Manager"
 RULES_OF_THE_GAME_TITLE = "Rules of the game:"
-RULES_OF_THE_GAME = "In this game each player is assigned a role secretly, either mafia or " \
-                    "bystander. Every round starts with Daytime phase, where all players " \
+RULES_OF_THE_GAME = "In this game each player is secretly assigned a role, either mafia or " \
+                    "bystander. Every round starts with a Daytime phase, where all players " \
                     "discuss together who they think the mafia players might be, and vote out " \
-                    "one player. Then it moves to Nighttime phase, where only mafia players " \
-                    "interact and vote to decide which bystander player they want to eliminate " \
-                    "(bystanders aren't exposed to the mafia identities or interaction). The " \
-                    "mafia's goal is to outnumber the bystanders, and the bystanders' goal is to " \
-                    "vote out all real mafia."
+                    "one player. Then the game moves to a Nighttime phase, where only mafia " \
+                    "players interact and vote to decide which bystander player they want to " \
+                    "eliminate (bystanders aren't exposed to the mafia identities or " \
+                    "interaction). The mafia's goal is to outnumber the bystanders, and the " \
+                    "bystanders' goal is to vote out all real mafia."
 
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
@@ -107,7 +107,8 @@ PARTICIPATION_CONSENT_MESSAGE = "Thank you for participating in our research. By
                                 "you are giving consent to use your input for research purposes, " \
                                 "such as analyzing the conversations text and publishing it as a " \
                                 "public dataset. Your true identity will remain anonymous, and " \
-                                "all personal details will not be saved!"
+                                "all personal details will not be saved! Please refrain from " \
+                                "using personal information, to secure your privacy."
 WELCOME_MESSAGE = "Welcome to the game of Mafia!"
 GET_USER_NAME_MESSAGE = "Who are you? Enter the name's number:"
 VOTE_FLAG = "VOTE"

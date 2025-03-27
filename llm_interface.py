@@ -88,7 +88,6 @@ def add_message_to_game(player, message_history):
     if is_time_to_vote(game_dir):
         return  # sometimes the messages is generated when it's already too late, so drop it
     if message:
-        player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
         # artificially making the model taking time to write the message
         wait_writing_time(player, message)
         if is_nighttime(game_dir) != is_nighttime_at_start:
@@ -97,7 +96,6 @@ def add_message_to_game(player, message_history):
             f.write(format_message(player.name, message))
         print(colored(MODEL_CHOSE_TO_USE_TURN_LOG, OPERATOR_COLOR))
     else:
-        player.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_PASS_TURN_LOG)
         print(colored(MODEL_CHOSE_TO_PASS_TURN_LOG, OPERATOR_COLOR))
 
 

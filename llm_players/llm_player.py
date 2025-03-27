@@ -1,7 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 from game_constants import get_role_string, GAME_START_TIME_FILE, PERSONAL_CHAT_FILE_FORMAT, \
-    MESSAGE_PARSING_PATTERN
+    MESSAGE_PARSING_PATTERN, SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG, MODEL_CHOSE_TO_PASS_TURN_LOG
 from llm_players.llm_constants import turn_task_into_prompt, GENERAL_SYSTEM_INFO, \
     PASS_TURN_TOKEN_KEY, USE_TURN_TOKEN_KEY, WORDS_PER_SECOND_WAITING_KEY, PASS_TURN_TOKEN_OPTIONS
 from llm_players.llm_wrapper import LLMWrapper
@@ -56,9 +56,9 @@ class LLMPlayer(ABC):
         if only_special_tokens:
             system_info += f"You can ONLY respond with one of two possible outputs:\n" \
                            f"{self.pass_turn_token} - indicating your character in the game " \
-                           f"should wait and not send a message in the current timing\n" \
-                           f"{self.use_turn_token} - indicating your character in the game should" \
-                           f"send a message to the public chat now\n\n" \
+                           f"should wait and not send a message in the current timing;\n" \
+                           f"{self.use_turn_token} - indicating your character in the game should " \
+                           f"send a message to the public chat now.\n\n" \
                            f"You must NEVER output any other text, explanations, or variations " \
                            f"of these tokens. Only these exact tokens are allowed: " \
                            f"{self.pass_turn_token} or {self.use_turn_token}.\n"
@@ -74,16 +74,21 @@ class LLMPlayer(ABC):
 
     def interpret_scheduling_decision(self, decision):
         if not decision:
-            return False
+            generate = False
         elif self.pass_turn_token in decision:
-            return False
+            generate = False
         elif self.use_turn_token in decision:
-            return True
+            generate = True
         # for more robustness:
         elif any([option in decision for option in PASS_TURN_TOKEN_OPTIONS]):
-            return False
+            generate = False
         else:
-            return True
+            generate = True
+        if generate:
+            self.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_USE_TURN_LOG)
+        else:
+            self.logger.log(SCHEDULING_DECISION_LOG, MODEL_CHOSE_TO_PASS_TURN_LOG)
+        return generate
 
     def get_vote(self, message_history, candidate_vote_names):
         task = f"From the following remaining players, which player you want to vote for " \

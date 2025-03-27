@@ -32,6 +32,9 @@ VOTED_OUT_SIGNAL = VOTED_OUT_MESSAGE_FORMAT.replace("{}", "")
 PHASE_END_SIGNAL = VOTING_TIME_MESSAGE_FORMAT.replace("{}", "")
 
 
+def avg(scores): return sum(scores) / len(scores)
+
+
 class ParsedMessage:
 
     def __init__(self, message, llm_player_name=None):
@@ -489,5 +492,61 @@ def main():
                                          phase_name=phase_name, player_name="human-players")
 
 
+def get_games_statistics():
+    all_games = []
+    number_of_phases_per_game = {}
+    all_messages_per_game = {}
+    llm_messages_per_game = {}
+    all_players_per_game = {}
+    did_llm_win_per_game = {}
+    all_metrics = [LLM_IDENTIFICATION] + METRICS_TO_SCORE
+    metrics_per_game = {metric: {} for metric in all_metrics}
+    for game_dir in Path(DIRS_PREFIX).glob("*"):
+        if game_dir.is_dir() and game_dir.name.isdigit() and "00001" not in game_dir.name:
+            all_games.append(game_dir)
+            __llm_player_name, all_players, __mafia_players, __human_players, __llm_config, \
+                metrics_results, __all_comments, parsed_messages_by_phase, __was_llm_voted_out, \
+                __is_llm_mafia, __did_mafia_win, did_llm_win = get_single_game_results(game_dir.name)
+            number_of_phases_per_game[game_dir.name] = len(parsed_messages_by_phase)
+            all_messages_including_manager = sum([phase.messages for phase in parsed_messages_by_phase], [])
+            all_messages_per_game[game_dir.name] = [msg for msg in all_messages_including_manager if not msg.is_manager]
+            llm_messages_per_game[game_dir.name] = [msg for msg in all_messages_per_game[game_dir.name] if msg.is_llm]
+            all_players_per_game[game_dir.name] = all_players
+            did_llm_win_per_game[game_dir.name] = did_llm_win
+            for metric in metrics_results:
+                if int(game_dir.name) < 40:  # no identification and others are 0 to 100
+                    if metric in METRICS_TO_SCORE:
+                        metrics_per_game[metric][game_dir.name] = avg([score / 100 for score in metrics_results[metric]])
+                else:
+                    metrics_per_game[metric][game_dir.name] = avg(metrics_results[metric])
+    num_players = [len(v) for v in all_players_per_game.values()]
+    print(f"# Games: {len(all_games)}\n"
+          f"Avg # Phases: {avg(number_of_phases_per_game.values())}\n"
+          f"Avg # Players: {avg(num_players)}\n"
+          f"\tSTD of # Players: {np.std(num_players)}\n"
+          f"\tMin of # Players: {min(num_players)}\n"
+          f"\tMax of # Players: {max(num_players)}\n"
+          f"Avg # Messages: {avg([len(v) for v in all_messages_per_game.values()])}\n"
+          f"LLM Avg # Messages: {avg([len(v) for v in llm_messages_per_game.values()])}\n"
+          f"Win %: {avg(did_llm_win_per_game.values())}\n"
+          f"\n")
+    for metric in metrics_per_game:
+        print(f"{metric}: {avg(metrics_per_game[metric].values())}")
+    print()
+    multiple_games_stats = [3] * (7 * 2) + [2] + [1] * 8 + [1] * (6 * 3) + [1] * 4 + [2] * 2 + [1] * 4 + [3] * 2 + [
+        5] * (2 + 2) + [4] * 3 + [6] * 4
+    """the 3s in the beginning are the people in the pilot except Asaf, then the 2 is Asaf, then the 8 new people in A400, 
+    then we had 5 games in the aquarium with 6 new each time, except of game 0059 and 0060 that had 2 players who played both,
+    then pizza night: Itai's 2 friends were for 3 games, then Itai and Roy played 5, Barr, Dan and almog played 4, Aviad and Guy played 5, Shaked, Yoav, Meitar, Shir played 6  
+    """  # TODO leave out!
+    print(f"statistics of players playing in multiple games:\n"
+          f"Average: {avg(multiple_games_stats)}\n"
+          f"STD: {np.std(multiple_games_stats)}\n"
+          f"Min: {min(multiple_games_stats)}\n"
+          f"Max: {max(multiple_games_stats)}\n")
+
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    get_games_statistics()
