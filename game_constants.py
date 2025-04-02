@@ -58,7 +58,7 @@ RULES_OF_THE_GAME = "In this game each player is secretly assigned a role, eithe
 # formats for saving texts
 TIME_FORMAT_FOR_TIMESTAMP = "%H:%M:%S"
 MESSAGE_FORMAT = "[{timestamp}] {name}: {message}"
-MESSAGE_PARSING_PATTERN = r"[[](\d\d):(\d\d):(\d\d)[]] (.+): (.+)"  # depends on MESSAGE_FORMAT
+MESSAGE_PARSING_PATTERN = r"\[(\d\d):(\d\d):(\d\d)\] ([^:]+): (.+)"  # depends on MESSAGE_FORMAT
 VOTING_MESSAGE_FORMAT = "{} voted for {}"
 VOTED_OUT_MESSAGE_FORMAT = "{} was voted out. Their role was {}"
 REAL_NAME_CODENAME_DELIMITER = ": "  # <real name>: <codename>
