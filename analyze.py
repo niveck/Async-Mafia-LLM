@@ -10,9 +10,10 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
     GAME_CONFIG_FILE, PLAYERS_KEY_IN_CONFIG, CUTTING_TO_VOTE_MESSAGE, VOTING_MESSAGE_FORMAT, \
     VOTED_OUT_MESSAGE_FORMAT, VOTING_TIME_MESSAGE_FORMAT, DAYTIME_START_PREFIX, DAYTIME, \
     NIGHTTIME_START_PREFIX, NIGHTTIME, PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, \
-    PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE
+    PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY
 from game_status_checks import is_voted_out
 from llm_players.llm_constants import LLM_CONFIG_KEY
+
 
 ANALYSIS_DIR = Path("./analysis")
 
@@ -30,6 +31,10 @@ WAS_VOTED_OUT = "X was voted out"
 VOTING_MESSAGE_SIGNAL = VOTING_MESSAGE_FORMAT.replace("{}", "")
 VOTED_OUT_SIGNAL = VOTED_OUT_MESSAGE_FORMAT.replace("{}", "")
 PHASE_END_SIGNAL = VOTING_TIME_MESSAGE_FORMAT.replace("{}", "")
+
+SENTENCE_EMBEDDING_MODEL = "prdev/mini-gte"
+# SENTENCE_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+REDUCED_DIM = 3
 
 
 def avg(scores): return sum(scores) / len(scores)
@@ -167,16 +172,14 @@ def parse_messages(game_dir, all_players, mafia_players, llm_player_name):
 
 def get_single_game_results(game_id):
     game_dir = Path(DIRS_PREFIX) / game_id
-    # analysis_dir = Path(ANALYSIS_DIR) / game_id  # TODO: remove?
-    # analysis_dir.mkdir()  # TODO: remove?
     all_players = (game_dir / PLAYER_NAMES_FILE).read_text().splitlines()
     mafia_players = (game_dir / MAFIA_NAMES_FILE).read_text().splitlines()
     llm_player_name = get_llm_player_name(all_players, game_dir)
     assert llm_player_name, "This game has no LLM, so analysis is meaningless"
     with open(game_dir / GAME_CONFIG_FILE) as f:
         config = json.load(f)
-    llm_config = [player[LLM_CONFIG_KEY] for player in config[PLAYERS_KEY_IN_CONFIG]
-                  if player["name"] == llm_player_name][0]
+    # llm_config = [player[LLM_CONFIG_KEY] for player in config[PLAYERS_KEY_IN_CONFIG]
+    #               if player["name"] == llm_player_name][0]
     human_players = [player for player in all_players if player != llm_player_name]
     all_metrics = [LLM_IDENTIFICATION] + METRICS_TO_SCORE
     metrics_results = {metric: [] for metric in all_metrics}
@@ -194,7 +197,7 @@ def get_single_game_results(game_id):
     is_llm_mafia = llm_player_name in mafia_players
     did_mafia_win = MAFIA_WINS_MESSAGE in (game_dir / WHO_WINS_FILE).read_text()
     did_llm_win = did_mafia_win == is_llm_mafia
-    return llm_player_name, all_players, mafia_players, human_players, llm_config, \
+    return llm_player_name, all_players, mafia_players, human_players, config, \
         metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, is_llm_mafia, \
         did_mafia_win, did_llm_win  # num_daytime_phases, num_nighttime_phases, and more from doc - will be in the next function to analyze
 
@@ -401,6 +404,7 @@ def plot_metric_scores(metrics_results_all_games):
         mean, std = plot_scores_for_single_metric(metric, metrics_results_all_games[metric])
         means_by_metrics.append(mean)
         stds_by_metrics.append(std)
+        print(f"\nMetric: {metric}\nMean: {mean:.2f}, STD: {std:.2f}\n")
     title = "Distributions of all metrics across all games"
     plt.title(title + f"\n(with {MEAN_MARKER_STYLE['marker']}-markers "
                       f"for means and error bars for +-STD)")
@@ -410,12 +414,15 @@ def plot_metric_scores(metrics_results_all_games):
     plt.show()
 
 
-def main():
+def preliminary_analysis_by_game():
     # game_ids = ["0036", "0037", "0027", "0028", "0030", "0032"]
     # game_ids = ["0051"]
     # game_ids = ["0051", "0056", "0057", "0058", "0059", "0060"]
     # game_ids = ["0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073"]
-    game_ids = ["0051", "0056", "0057", "0058", "0059", "0060", "0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073"]
+    # game_ids = ["0051", "0056", "0057", "0058", "0059", "0060", "0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073"]
+    # game_ids = ["0051", "0056", "0057", "0058", "0059", "0060", "0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073"]
+    game_ids = [game_dir.name for game_dir in Path(DIRS_PREFIX).glob("*")
+                if game_dir.is_dir() and game_dir.name.isdigit() and "00001" not in game_dir.name]
 
     hist_for_daytime_phases = True
     hist_for_nighttime_phases = False
@@ -429,7 +436,7 @@ def main():
     reset_message_lengths_across_all_games = []
     for game_id in game_ids:
 
-        llm_player_name, all_players, mafia_players, human_players, llm_config, \
+        llm_player_name, all_players, mafia_players, human_players, config, \
             metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, \
             is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
 
@@ -469,7 +476,7 @@ def main():
     llm_only_reset_message_lengths_across_all_games = []
     human_only_reset_message_lengths_across_all_games = []
     for game_id in game_ids:  # Yes, I'm aware this is currently repetition of calculation...
-        llm_player_name, all_players, mafia_players, human_players, llm_config, \
+        llm_player_name, all_players, mafia_players, human_players, config, \
             metrics_results, all_comments, parsed_messages_by_phase, was_llm_voted_out, \
             is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
         player_message_lengths = plot_messages_histogram_in_phase(
@@ -504,7 +511,7 @@ def get_games_statistics():
     for game_dir in Path(DIRS_PREFIX).glob("*"):
         if game_dir.is_dir() and game_dir.name.isdigit() and "00001" not in game_dir.name:
             all_games.append(game_dir)
-            __llm_player_name, all_players, __mafia_players, __human_players, __llm_config, \
+            __llm_player_name, all_players, __mafia_players, __human_players, __config, \
                 metrics_results, __all_comments, parsed_messages_by_phase, __was_llm_voted_out, \
                 __is_llm_mafia, __did_mafia_win, did_llm_win = get_single_game_results(game_dir.name)
             number_of_phases_per_game[game_dir.name] = len(parsed_messages_by_phase)
@@ -533,8 +540,8 @@ def get_games_statistics():
     for metric in metrics_per_game:
         print(f"{metric}: {avg(metrics_per_game[metric].values())}")
     print()
-    multiple_games_stats = [3] * (7 * 2) + [2] + [1] * 8 + [1] * (6 * 3) + [1] * 4 + [2] * 2 + [1] * 4 + [3] * 2 + [
-        5] * (2 + 2) + [4] * 3 + [6] * 4
+    multiple_games_stats = [3] * (7 * 2) + [2] + [1] * 8 + [1] * (6 * 3) + [1] * 4 + [2] * 2 + [
+        1] * 4 + [3] * 2 + [5] * (2 + 2) + [4] * 3 + [6] * 4
     """the 3s in the beginning are the people in the pilot except Asaf, then the 2 is Asaf, then the 8 new people in A400, 
     then we had 5 games in the aquarium with 6 new each time, except of game 0059 and 0060 that had 2 players who played both,
     then pizza night: Itai's 2 friends were for 3 games, then Itai and Roy played 5, Barr, Dan and almog played 4, Aviad and Guy played 5, Shaked, Yoav, Meitar, Shir played 6  
@@ -546,7 +553,429 @@ def get_games_statistics():
           f"Max: {max(multiple_games_stats)}\n")
 
 
+def calculate_timing_diffs(phase: Phase, this_game_human_player_messages_timing_diffs,
+                           this_game_llm_player_messaging_timing_diffs):
+    for i, message in enumerate(phase.messages):
+        if message.is_manager:
+            continue
+        timing_diff = message.timestamp - phase.messages[i - 1].timestamp  # phase.messages[0] is manager!
+        if message.is_llm:
+            this_game_llm_player_messaging_timing_diffs.append(timing_diff)
+        else:
+            this_game_human_player_messages_timing_diffs[message.name].append(timing_diff)
+
+
+def calculate_self_timing_diffs(phase: Phase, this_game_human_player_self_timing_diffs,
+                                this_game_llm_player_self_timing_diffs):
+    start_phase_message = phase.messages[0]
+    for player in phase.active_players:
+        messages = [start_phase_message] + [message for message in phase.messages
+                                            if message.name == player]
+        for i, message in enumerate(messages):
+            if i == 0:
+                continue
+            timing_diff = message.timestamp - phase.messages[i - 1].timestamp
+            if message.is_llm:
+                this_game_llm_player_self_timing_diffs.append(timing_diff)
+            else:
+                this_game_human_player_self_timing_diffs[player].append(timing_diff)
+
+
+def get_message_timings_statistics():
+    all_games = []
+    daytime_minutes_by_game = {}
+    nighttime_minutes_by_game = {}
+    all_daytime_messages_by_game = {}
+    all_nighttime_messages_by_game = {}
+    number_of_messages_by_humans_in_daytime = []
+    number_of_messages_by_llm_in_daytime = []
+    # timing diff (1): between a message and the previous one in the conversation
+    timing_diff_of_messages_sent_by_humans = []
+    timing_diff_of_messages_sent_by_llm = []
+    mean_per_game_of_timing_diff_of_messages_sent_by_humans = []
+    mean_per_game_of_timing_diff_of_messages_sent_by_llm = []
+    # timing diff (2): between a message and the same player's previous one
+    timing_diff_of_self_messages_by_humans = []
+    timing_diff_of_self_messages_by_llm = []
+    mean_per_game_of_timing_diff_of_self_messages_by_humans = []
+    mean_per_game_of_timing_diff_of_self_messages_by_llm = []
+    for game_dir in Path(DIRS_PREFIX).glob("*"):
+        if game_dir.is_dir() and game_dir.name.isdigit() and "00001" not in game_dir.name:
+            all_games.append(game_dir)
+            llm_player_name, __all_players, __mafia_players, human_players, config, \
+                __metrics_results, __all_comments, parsed_messages_by_phase, __was_llm_voted_out, \
+                __is_llm_mafia, __did_mafia_win, __did_llm_win = get_single_game_results(game_dir.name)
+            game_name = game_dir.name
+            # timing diff (1)
+            this_game_human_player_messages_timing_diffs = {player: [] for player in human_players}
+            this_game_llm_player_messaging_timing_diffs = []
+            # timing diff (2)
+            this_game_human_player_self_timing_diffs = {player: [] for player in human_players}
+            this_game_llm_player_self_timing_diffs = []
+            for phase in parsed_messages_by_phase:
+                phase.reset_timestamps()
+                # timing diff (1)
+                calculate_timing_diffs(phase, this_game_human_player_messages_timing_diffs,
+                                       this_game_llm_player_messaging_timing_diffs)
+                # timing diff (2)
+                calculate_self_timing_diffs(phase, this_game_human_player_self_timing_diffs,
+                                            this_game_llm_player_self_timing_diffs)
+                player_messages = [message for message in phase.messages if not message.is_manager]
+                if phase.is_daytime:
+                    all_daytime_messages_by_game[game_name] = player_messages
+                    num_messages_by_humans = {player: len([msg for msg in phase.messages if msg.name == player])
+                                              for player in phase.active_players if player != llm_player_name}
+                    number_of_messages_by_humans_in_daytime.extend(list(num_messages_by_humans.values()))
+                    if llm_player_name in phase.active_players:
+                        number_of_messages_by_llm_in_daytime.append(len([msg for msg in phase.messages
+                                                                          if msg.name == llm_player_name]))
+                else:
+                    all_nighttime_messages_by_game[game_name] = player_messages
+            # timing diff (1)
+            ## record the mean time diff for each player in the game
+            mean_per_game_of_timing_diff_of_messages_sent_by_humans.extend(
+                [np.mean(player_time_diffs) for player_time_diffs
+                 in this_game_human_player_messages_timing_diffs.values()])
+            mean_per_game_of_timing_diff_of_messages_sent_by_llm.append(
+                np.mean(this_game_llm_player_messaging_timing_diffs))
+            ## just in case still have all time diffs together
+            timing_diff_of_messages_sent_by_humans.extend(
+                sum(this_game_human_player_messages_timing_diffs.values(), []))
+            timing_diff_of_messages_sent_by_llm.extend(this_game_llm_player_messaging_timing_diffs)
+            # timing diff (2)
+            ## record the mean time diff for each player in the game
+            mean_per_game_of_timing_diff_of_self_messages_by_humans.extend(
+                [np.mean(player_time_diffs) for player_time_diffs
+                 in this_game_human_player_self_timing_diffs.values()])
+            mean_per_game_of_timing_diff_of_self_messages_by_llm.append(
+                np.mean(this_game_llm_player_self_timing_diffs))
+            ## just in case still have all time diffs together
+            timing_diff_of_self_messages_by_humans.extend(
+                sum(this_game_human_player_self_timing_diffs.values(), []))
+            timing_diff_of_self_messages_by_llm.extend(this_game_llm_player_self_timing_diffs)
+            daytime_minutes_by_game[game_name] = config[DAYTIME_MINUTES_KEY]
+            nighttime_minutes_by_game[game_name] = config[NIGHTTIME_MINUTES_KEY]
+            print("break")
+
+    # timing diff (1)
+    print(f"Time between a player's message and the previous message:")
+    for player_type, timing_diffs in [("Human", timing_diff_of_messages_sent_by_humans),
+                                      ("LLM", timing_diff_of_messages_sent_by_llm),
+                                      ("All Players", timing_diff_of_messages_sent_by_humans
+                                                      + timing_diff_of_messages_sent_by_llm)]:
+        print(f"{player_type}: mean = {np.mean(timing_diffs):.2f}, "
+              f"std = {np.std(timing_diffs):.2f}")
+
+    # timing diff (2)
+    print(f"Time between a player's message and his own previous message:")
+    for player_type, timing_diffs in [("Human", timing_diff_of_self_messages_by_humans),
+                                      ("LLM", timing_diff_of_self_messages_by_llm),
+                                      ("All Players", timing_diff_of_self_messages_by_humans
+                                                      + timing_diff_of_self_messages_by_llm)]:
+        print(f"{player_type}: mean = {np.mean(timing_diffs):.2f}, "
+              f"std = {np.std(timing_diffs):.2f}")
+    title = "Density of a Player's Mean Time Difference\nBetween Messages in a Game"
+    xlabel = "Player's Mean Time Difference Between Messages in a Game (in seconds)"
+    plot_timing_diffs_histogram(timing_diff_of_self_messages_by_humans,
+                                timing_diff_of_self_messages_by_llm,
+                                title, xlabel)
+
+    print(f"Number of messages by a player per daytime phase:")
+    for player_type, num_of_messages in [("Human", number_of_messages_by_humans_in_daytime),
+                                         ("LLM", number_of_messages_by_llm_in_daytime),
+                                         ("All Players", number_of_messages_by_humans_in_daytime
+                                                         + number_of_messages_by_llm_in_daytime)]:
+        print(f"{player_type}: mean = {np.mean(num_of_messages):.2f}, "
+              f"std = {np.std(num_of_messages):.2f}")
+
+    games_by_daytime_minutes = {length: [] for length in set(daytime_minutes_by_game.values())}
+    games_by_nighttime_minutes = {length: [] for length in set(nighttime_minutes_by_game.values())}
+    for game_name, length in daytime_minutes_by_game.items():
+        games_by_daytime_minutes[length].append(game_name)
+    for game_name, length in nighttime_minutes_by_game.items():
+        games_by_nighttime_minutes[length].append(game_name)
+    all_daytime_messages_by_daytime_length = {length: [] for length in games_by_daytime_minutes.keys()}
+    for length in games_by_daytime_minutes.keys():
+        for game_name in games_by_daytime_minutes[length]:
+            all_daytime_messages_by_daytime_length[length].extend(all_daytime_messages_by_game[game_name])
+    all_daytime_messages = sum(all_daytime_messages_by_daytime_length.values(), [])
+    all_nighttime_messages_by_nighttime_length = {length: [] for length in games_by_nighttime_minutes.keys()}
+    for length in games_by_nighttime_minutes.keys():
+        for game_name in games_by_nighttime_minutes[length]:
+            all_nighttime_messages_by_nighttime_length[length].extend(all_daytime_messages_by_game[game_name])
+    all_nighttime_messages = sum(all_nighttime_messages_by_nighttime_length.values(), [])
+    # plots:
+    # ## timing density plots by daytime length
+    # for length, messages in all_daytime_messages_by_daytime_length.items():
+    #     title = (f"Density of Message Timings During Daytime Phase,\n"
+    #              f"for Games with Daytime of Length {length}")
+    #     plot_timing_histogram(messages, title)
+    # ## timing density plot for all messages in all games:
+    # title = (f"Density of Message Timings During Daytime Phase,"
+    #          f"\nfor All Message in All Games")
+    # plot_timing_histogram(all_daytime_messages, title)
+    # ## violin plots of timings:
+    # plt.violinplot([[message.timestamp for message in all_daytime_messages
+    #                  if message.is_llm is b] for b in (True, False)],
+    #                vert=False, showmeans=True)
+    # plt.show()
+
+    print("break")
+
+
+def plot_timing_histogram(messages, title):
+    plt.title(title)
+    for player_type, is_llm, density_color, mean_color, std_color in [
+        ("LLM", True, "red", "darkred", "indianred"),
+        ("Human", False, "blue", "darkblue", "slateblue")]:
+        player_type_messages = [message for message in messages
+                                if message.is_llm == is_llm]
+        timings = [message.timestamp for message in player_type_messages]
+        mean = np.mean(timings)
+        std = np.std(timings)
+        plt.hist(timings, density=True, bins=20, alpha=0.5, color=density_color,
+                 label=fr"{player_type}")
+        plt.axvline(mean, color=mean_color, linestyle="-", label=fr"{player_type} $\mu = {mean:.2f}$")
+        plt.axvline(mean + std, color=std_color, linestyle="--",
+                    label=fr"{player_type} $\mu \pm \sigma$ $(\sigma = {std:.2f})$")
+        plt.axvline(mean - std, color=std_color, linestyle="--")
+    plt.xlabel("Seconds Within a Daytime Phase")
+    plt.ylabel("Density of Sent Messages")
+    plt.legend()
+    plt.show()
+
+
+def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title, xlabel):
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel("Density")
+    for player_type, timing_diffs, density_color, mean_color, std_color in [
+        ("Human", human_timing_diffs, "blue", "darkblue", "slateblue"),
+        ("LLM", llm_timing_diffs, "red", "darkred", "indianred")]:
+        plt.hist(timing_diffs, density=True, bins=20, alpha=0.5, color=density_color,
+                 label=fr"{player_type}")
+        mean = np.mean(timing_diffs)
+        std = np.std(timing_diffs)
+        plt.axvline(mean, color=mean_color, linestyle="-",
+                    label=fr"{player_type} $\mu = {mean:.2f}$")
+        plt.axvline(mean + std, color=std_color, linestyle="--",
+                    label=fr"{player_type} $\mu \pm \sigma$ $(\sigma = {std:.2f})$")
+        plt.axvline(mean - std, color=std_color, linestyle="--")
+    plt.legend()
+    plt.show()
+
+
+def analyze_embeddings(messages: list[ParsedMessage]):
+    # local imports to reduce time when not running this analysis
+    from sentence_transformers import SentenceTransformer
+    from sklearn.decomposition import PCA
+    messages = [message for message in messages if not message.is_manager]
+    model = SentenceTransformer(SENTENCE_EMBEDDING_MODEL)
+    embeddings = model.encode([message.content for message in messages])
+    llm_identities = [int(message.is_llm) for message in messages]
+    assert REDUCED_DIM in (2, 3)
+    reduced_dimension_embedding = PCA(n_components=REDUCED_DIM).fit_transform(embeddings)
+    fig = plt.figure()
+    if REDUCED_DIM == 3:
+        ax = fig.gca(projection='3d')
+        ax.scatter(reduced_dimension_embedding[:, 0],
+                   reduced_dimension_embedding[:, 1],
+                   reduced_dimension_embedding[:, 2],
+                   c=llm_identities,
+                   # s=MARKER_SIZE,
+                   )
+    else:  # REDUCED_DIM == 2
+        plt.scatter(reduced_dimension_embedding[:, 0],
+                    reduced_dimension_embedding[:, 1],
+                    c=llm_identities,
+                    # s=MARKER_SIZE,
+                    )
+    plt.show()
+
+
+def plot_percentage_bars_chart(did_llm_win, was_llm_voted_out, did_mafia_win, is_llm_mafia):
+    # Percentage plots of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
+    # did_llm_win_alive = []
+    did_llm_win_as_mafia = []
+    did_llm_win_as_bystander = []
+    # did_llm_win_alive_as_mafia = []
+    # did_llm_win_alive_as_bystander = []
+    for i, llm_win in enumerate(did_llm_win):
+        # llm_win_alive = llm_win and was_llm_voted_out[i]
+        # did_llm_win_alive.append(llm_win_alive)
+        if is_llm_mafia[i]:
+            did_llm_win_as_mafia.append(llm_win)
+            # did_llm_win_alive_as_mafia.append(llm_win_alive)
+        else:
+            did_llm_win_as_bystander.append(llm_win)
+            # did_llm_win_alive_as_bystander.append(llm_win_alive)
+    default_true_color, default_false_color = "royalblue", "lightblue"  # "darkblue", "slateblue"  # "darkred", "indianred"
+    for label, values, true_color, false_color in [
+        ("LLM Win", did_llm_win, default_true_color, default_false_color),
+        # ("LLM Win A", did_llm_win_alive, default_true_color, default_false_color),
+        ("LLM Win as Bystander", did_llm_win_as_bystander, default_true_color, default_false_color),
+        # ("LLM Win A (B)", did_llm_win_alive_as_bystander, default_true_color, default_false_color),
+        ("LLM Win as Mafia", did_llm_win_as_mafia, default_true_color, default_false_color),
+        # ("LLM Win A (M)", did_llm_win_alive_as_mafia, default_true_color, default_false_color),
+        ("Mafia Win", did_mafia_win, default_true_color, default_false_color),
+        ("LLM is Mafia", is_llm_mafia, default_true_color, default_false_color),
+                                                  ][::-1]:
+        true_percent = avg(values)
+        plt.barh(label, 1, color=false_color)
+        plt.barh(label, true_percent, color=true_color)
+        plt.text(true_percent, label, f"{true_percent * 100:.2f}%", va="center")
+    plt.xlim(0, 1)
+    plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1],
+               ["0%", "20%", "40%", "60%", "80%", "100%"])
+    plt.xlabel("Percentage")
+    plt.tight_layout()
+    plt.savefig(ANALYSIS_DIR / "llm_performance_in_game.png")
+    plt.show()
+
+
+def calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games: list[list[Phase]],
+                                                 llm_names_all_games: list[str]):
+    human_player_daytime_message_amount = []
+    llm_player_daytime_message_amount = []
+    for phases_in_game, llm_name in zip(parsed_messages_by_phase_all_games, llm_names_all_games):
+        for phase in phases_in_game:
+            if not phase.is_daytime:
+                continue
+            for player_name in phase.active_players:
+                message_amounts = llm_player_daytime_message_amount if player_name == llm_name \
+                    else human_player_daytime_message_amount
+                message_amounts.append(len([msg for msg in phase.messages
+                                            if msg.name == player_name]))
+    print(f"*Player type* | *Mean* | *STD*")
+    for player_type, all_amounts in [("Human", human_player_daytime_message_amount),
+                                     ("LLM", llm_player_daytime_message_amount),
+                                     ("All players", human_player_daytime_message_amount
+                                                     + llm_player_daytime_message_amount)]:
+        print(f"{player_type} | {np.mean(all_amounts):.2f} | {np.std(all_amounts):.2f}")
+    print("\n")
+
+
+def calc_game_mean_timing_diffs(parsed_messages_by_phase, human_players,
+                                mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                mean_per_game_of_timing_diff_of_self_messages_by_llm):
+    # timing diff (1)
+    this_game_human_player_messages_timing_diffs = {player: [] for player in human_players}
+    this_game_llm_player_messaging_timing_diffs = []
+    # timing diff (2)
+    this_game_human_player_self_timing_diffs = {player: [] for player in human_players}
+    this_game_llm_player_self_timing_diffs = []
+    for phase in parsed_messages_by_phase:
+        phase.reset_timestamps()
+        # timing diff (1)
+        calculate_timing_diffs(phase, this_game_human_player_messages_timing_diffs,
+                               this_game_llm_player_messaging_timing_diffs)
+        # timing diff (2)
+        calculate_self_timing_diffs(phase, this_game_human_player_self_timing_diffs,
+                                    this_game_llm_player_self_timing_diffs)
+    # timing diff (1)
+    mean_per_game_of_timing_diff_of_messages_sent_by_humans.extend(
+        [np.mean(player_time_diffs) for player_time_diffs
+         in this_game_human_player_messages_timing_diffs.values()])
+    mean_per_game_of_timing_diff_of_messages_sent_by_llm.append(
+        np.mean(this_game_llm_player_messaging_timing_diffs))
+    # timing diff (2)
+    mean_per_game_of_timing_diff_of_self_messages_by_humans.extend(
+        [np.mean(player_time_diffs) for player_time_diffs
+         in this_game_human_player_self_timing_diffs.values()])
+    mean_per_game_of_timing_diff_of_self_messages_by_llm.append(
+        np.mean(this_game_llm_player_self_timing_diffs))
+
+def main():
+    # Should include:
+    # 1. LLM-Agent Performance in Game:
+    # 1.1 Percentage plots (instead of Pie Chats like in LIMA) of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
+    # 2. Message Quantity:
+    # 2.1 Table: Amount of messages sent by a player during a daytime phase.
+    # 2.2 Smoothed Histograms - averaged time differences for a player in a game:
+    # 2.2.1 between a message and the previous one by anyone
+    # 2.2.2 between a message and the previous one by the same player!
+    # 3. Message Content:
+    # 3.1 Table: table of averaged + STD message length, repetition (unique messages), # unique words
+    # 4. Embeddding Analysis:
+    # 4.1 before visual plots (Table?): try to have linear(/non linear?) separation of human and LLM, and also mafia and bystanders, and also humans before LLM was voted out and after!
+    # 4.2 visualize with 2D and 3D - colors for human and LLM, subcolors for mafia and bystanders
+    # 4.3 visualize again with colors for human/LLM but this time with subcolor for humans after LLM was voted out
+    # 5. Participant’s Feedback
+    # 5.1 overall average (for all players in all games together) of identification (no need for STD)
+    # 5.2 Table: means and STDs (overall, like above) for the 3 human-ranked scores
+
+
+    did_mafia_win_all_games = []
+    did_llm_win_all_games = []
+    was_llm_voted_out_all_games = []
+    is_llm_mafia_all_games = []
+
+    parsed_messages_by_phase_all_games = []
+    llm_names_all_games = []
+
+    # timing diff (1): between a message and the previous one in the conversation
+    mean_per_game_of_timing_diff_of_messages_sent_by_humans = []
+    mean_per_game_of_timing_diff_of_messages_sent_by_llm = []
+    # timing diff (2): between a message and the same player's previous one
+    mean_per_game_of_timing_diff_of_self_messages_by_humans = []
+    mean_per_game_of_timing_diff_of_self_messages_by_llm = []
+
+    metrics_results_all_games = defaultdict(list)
+
+    for game_dir in Path(DIRS_PREFIX).glob("*"):
+        game_id = game_dir.name
+        if not (game_dir.is_dir() and game_id.isdigit() and "00001" not in game_id):
+            continue
+
+        llm_player_name, __all_players, __mafia_players, human_players, __config, \
+            metrics_results, __all_comments, parsed_messages_by_phase, was_llm_voted_out, \
+            is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
+
+        did_mafia_win_all_games.append(did_mafia_win)
+        did_llm_win_all_games.append(did_llm_win)
+        was_llm_voted_out_all_games.append(was_llm_voted_out)
+        is_llm_mafia_all_games.append(is_llm_mafia)
+
+        parsed_messages_by_phase_all_games.append(parsed_messages_by_phase)
+        llm_names_all_games.append(llm_player_name)
+
+        # TODO: remember I reset the timestamps here!
+        calc_game_mean_timing_diffs(parsed_messages_by_phase, human_players,
+                                    mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                    mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                    mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                    mean_per_game_of_timing_diff_of_self_messages_by_llm)
+
+        for metric in metrics_results:
+            metrics_results_all_games[metric].append(np.array(metrics_results[metric]))
+
+    # TODO: uncomment out important parts when finished
+
+    # # 1.
+    # plot_percentage_bars_chart(did_llm_win_all_games, was_llm_voted_out_all_games,
+    #                            did_mafia_win_all_games, is_llm_mafia_all_games)
+
+    # 2.1
+    calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
+                                                 llm_names_all_games)
+
+    # 2.2
+    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                "TITLE TO CHANGE", "XLABEL TO CHANGE")
+    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                mean_per_game_of_timing_diff_of_self_messages_by_llm,
+                                "SELF TITLE TO CHANGE", "SELF XLABEL TO CHANGE")
+
+    print("wait")
+    ######## plot_metric_scores(metrics_results_all_games)
+
 
 if __name__ == '__main__':
-    # main()
-    get_games_statistics()
+    # preliminary_analysis_by_game()
+    # get_games_statistics()
+    # get_message_timings_statistics()
+    # get_message_content_analysis()
+    main()
