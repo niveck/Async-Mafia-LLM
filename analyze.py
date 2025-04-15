@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 from collections import defaultdict
 from matplotlib import pyplot as plt  # TODO add matplotlib to requirements
+from sklearn.neighbors import KernelDensity
 from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, METRICS_TO_SCORE, \
     MESSAGE_PARSING_PATTERN, GAME_MANAGER_NAME, LLM_IDENTIFICATION, PERSONAL_SURVEY_FILE_FORMAT, \
     SURVEY_COMMENTS_TITLE, METRIC_NAME_AND_SCORE_DELIMITER, MAFIA_WINS_MESSAGE, WHO_WINS_FILE, \
@@ -14,6 +15,8 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
 from game_status_checks import is_voted_out
 from llm_players.llm_constants import LLM_CONFIG_KEY
 
+
+LAST_GAME_FROM_PILOT = 37
 
 ANALYSIS_DIR = Path("./analysis")
 
@@ -31,6 +34,10 @@ WAS_VOTED_OUT = "X was voted out"
 VOTING_MESSAGE_SIGNAL = VOTING_MESSAGE_FORMAT.replace("{}", "")
 VOTED_OUT_SIGNAL = VOTED_OUT_MESSAGE_FORMAT.replace("{}", "")
 PHASE_END_SIGNAL = VOTING_TIME_MESSAGE_FORMAT.replace("{}", "")
+
+# message content empiric metrics
+LENGTH, REPETITION, NUM_UNIQUE_WORDS = "length", "repetition", "num_unique_words"
+CONTENT_METRICS = [LENGTH, REPETITION, NUM_UNIQUE_WORDS]
 
 SENTENCE_EMBEDDING_MODEL = "prdev/mini-gte"
 # SENTENCE_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
@@ -130,8 +137,9 @@ def get_survey_results(game_dir, player_name, all_metrics):
             new_line_is_comments = True
         for metric in all_metrics:
             if line.startswith(metric):
-                score = re.match(fr"{metric}{METRIC_NAME_AND_SCORE_DELIMITER}(\d+)", line).group(1)
-                results[metric] = int(score)
+                score = int(re.match(fr"{metric}{METRIC_NAME_AND_SCORE_DELIMITER}(\d+)",
+                                     line).group(1))
+                results[metric] = score if int(game_dir.name) > LAST_GAME_FROM_PILOT else score / 20
     return results
 
 
@@ -384,8 +392,8 @@ def plot_scores_for_single_metric(metric, scores_by_game):
     for i, game in enumerate(scores_by_game):
         x += [i] * len(game)
         y += [score for score in game]
-        means.append(game.mean())
-        stds.append(game.std())
+        means.append(np.mean(game))
+        stds.append(np.std(game))
     plt.scatter(x, y)
     plt.errorbar(range(len(scores_by_game)), means, stds, linestyle="none", **MEAN_MARKER_STYLE)
     plt.xticks([], [])
@@ -452,7 +460,7 @@ def preliminary_analysis_by_game():
         was_llm_voted_out_all_games.append(was_llm_voted_out)
         is_llm_mafia_all_games.append(is_llm_mafia)
         for metric in metrics_results:
-            metrics_results_all_games[metric].append(np.array(metrics_results[metric]))
+            metrics_results_all_games[metric].append(metrics_results[metric])
 
         plot_game_flow(game_id, all_players, parsed_messages_by_phase, llm_player_name)
         # # plot_game_flow(game_id, human_players, parsed_messages_by_phase, llm_player_name)
@@ -678,7 +686,7 @@ def get_message_timings_statistics():
     xlabel = "Player's Mean Time Difference Between Messages in a Game (in seconds)"
     plot_timing_diffs_histogram(timing_diff_of_self_messages_by_humans,
                                 timing_diff_of_self_messages_by_llm,
-                                title, xlabel)
+                                title, xlabel)  # TODO: need to adjust to the new function!
 
     print(f"Number of messages by a player per daytime phase:")
     for player_type, num_of_messages in [("Human", number_of_messages_by_humans_in_daytime),
@@ -745,24 +753,35 @@ def plot_timing_histogram(messages, title):
     plt.show()
 
 
-def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title, xlabel):
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel("Density")
-    for player_type, timing_diffs, density_color, mean_color, std_color in [
-        ("Human", human_timing_diffs, "blue", "darkblue", "slateblue"),
-        ("LLM", llm_timing_diffs, "red", "darkred", "indianred")]:
-        plt.hist(timing_diffs, density=True, bins=20, alpha=0.5, color=density_color,
-                 label=fr"{player_type}")
-        mean = np.mean(timing_diffs)
-        std = np.std(timing_diffs)
-        plt.axvline(mean, color=mean_color, linestyle="-",
-                    label=fr"{player_type} $\mu = {mean:.2f}$")
-        plt.axvline(mean + std, color=std_color, linestyle="--",
-                    label=fr"{player_type} $\mu \pm \sigma$ $(\sigma = {std:.2f})$")
-        plt.axvline(mean - std, color=std_color, linestyle="--")
-    plt.legend()
-    plt.show()
+def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
+                                xlabel, plot_name, ax, kde_bandwidth=1):
+    # plt.title(title)
+    # plt.xlabel(xlabel)
+    # plt.ylabel("Proportion (density)")
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Proportion (density)")
+    max_x = max(human_timing_diffs + llm_timing_diffs)
+    for player_type, timing_diffs, color in [("Human", human_timing_diffs, "blue"),
+                                             ("LLM", llm_timing_diffs, "red")]:
+        # plt.hist(timing_diffs, density=True, bins=20, alpha=0.5, color=color,
+        #          label=fr"{player_type} $(\mu = {np.mean(timing_diffs):.2f}, "
+        #                fr"\sigma = {np.std(timing_diffs):.2f})$")
+        timing_diffs_squeezed = np.array(timing_diffs)[:, np.newaxis]
+        kde_timing_diffs = KernelDensity(
+            kernel="gaussian",bandwidth=kde_bandwidth).fit(timing_diffs_squeezed)
+        x_range = np.linspace(-1, max_x + 5, 1000)
+        log_density = kde_timing_diffs.score_samples(x_range[:, np.newaxis])
+        # plt.fill_between(
+        ax.fill_between(
+            x_range, np.exp(log_density), 0, alpha=0.5, color=color,
+            label=fr"{player_type} $(\mu = {np.mean(timing_diffs):.2f}, "
+                  fr"\sigma = {np.std(timing_diffs):.2f})$")
+    # plt.ylim(0, np.exp(max(log_density)) * 1.1)
+    ax.set_ylim(0, np.exp(max(log_density)) * 1.1)
+    ax.legend()
+    # plt.savefig(ANALYSIS_DIR / f"{plot_name}.png")
+    # plt.show()
 
 
 def analyze_embeddings(messages: list[ParsedMessage]):
@@ -887,6 +906,93 @@ def calc_game_mean_timing_diffs(parsed_messages_by_phase, human_players,
     mean_per_game_of_timing_diff_of_self_messages_by_llm.append(
         np.mean(this_game_llm_player_self_timing_diffs))
 
+
+def plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                  mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_llm):
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(11, 4.7))
+    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                "Distribution of Average Time Between a Player's Message\n"
+                                "and the Previous Message by Any Other Player",
+                                "Player's Average Waiting Time From Another Message (seconds)",
+                                "mean_time_diff_msg_to_any_prev",
+                                axs[0], kde_bandwidth=1)  # TODO: change when there is more data
+    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                mean_per_game_of_timing_diff_of_self_messages_by_llm,
+                                "Distribution of Average Time Difference Between\n"
+                                "Messages of the Same Player",
+                                "Player's Average Waiting Time Between Self Messages (seconds)",
+                                "mean_time_diff_same_player_msg",
+                                axs[1], kde_bandwidth=5)  # TODO: change when there is more data
+    fig.tight_layout()
+    plt.savefig(ANALYSIS_DIR / "mean_time_diff_hists.png")
+    plt.show()
+
+
+def calc_num_unique_words(messages):
+    words = []
+    for message in messages:
+        raw_words = message.lower().split()  # split() also strips each word
+        for word in raw_words:
+            stripped_word = strip_special_chars(word)
+            if stripped_word:
+                words.append(stripped_word)
+    return len(set(words))
+
+
+def calc_content_metrics_from_messages(content_metrics, messages):
+    lengths = [len(message.split()) for message in messages]
+    content_metrics[LENGTH].append(np.mean(lengths))
+    content_metrics[REPETITION].append(len(messages) - len(set(messages)))
+    content_metrics[NUM_UNIQUE_WORDS].append(calc_num_unique_words(messages))
+
+
+def strip_special_chars(content):
+    return re.search(r"^[^a-zA-Z0-9]*(.*?)[^a-zA-Z0-9]*$", content).group(1)
+
+
+def calc_mean_message_content_empiric_metrics(parsed_messages_by_phase, human_players,
+                                              human_content_metrics, llm_content_metrics):
+    human_messages_by_name = {player: [] for player in human_players}
+    llm_messages = []
+    for phase in parsed_messages_by_phase:
+        # TODO: should only be daytime?
+        for message in phase.messages:
+            if message.is_manager:
+                continue
+            if message.is_llm:
+                llm_messages.append(message.content)
+            else:
+                human_messages_by_name[message.name].append(strip_special_chars(message.content))
+    for player, messages in human_messages_by_name.items():
+        calc_content_metrics_from_messages(human_content_metrics, messages)
+    calc_content_metrics_from_messages(llm_content_metrics, llm_messages)
+
+
+def display_mean_std(metric_list):
+    return rf"{np.mean(metric_list):.2f} ($\pm$ {np.std(metric_list):.2f})"
+
+
+def calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics):
+    print("Player type, then metrics by order:", ", ".join(CONTENT_METRICS))
+    print("Now in Latex table format:")
+    for player_type, metric_lists in [("Human", human_content_metrics),
+                                      ("LLM", llm_content_metrics)]:
+        print(f"{player_type} & {' & '.join([display_mean_std(metric_lists[metric]) for metric in CONTENT_METRICS])}" + " \\\\")
+
+
+def calc_players_metric(metrics_results_all_games: defaultdict[str, list[int]]):
+    for metric, results_by_game in metrics_results_all_games.items():
+        all_results = sum(results_by_game, [])
+        if metric == LLM_IDENTIFICATION:
+            print(f"{metric}: {np.mean(all_results) * 100:.2f}%")
+        else:
+            print(f"{metric.upper()}: MEAN, STD -\n"
+                  f"{np.mean(all_results):.2f} & {np.std(all_results):.2f} \\\\")
+
+
 def main():
     # Should include:
     # 1. LLM-Agent Performance in Game:
@@ -922,6 +1028,11 @@ def main():
     mean_per_game_of_timing_diff_of_self_messages_by_humans = []
     mean_per_game_of_timing_diff_of_self_messages_by_llm = []
 
+    human_content_metrics = {metric: [] for metric in CONTENT_METRICS}
+    llm_content_metrics = {metric: [] for metric in CONTENT_METRICS}
+
+    all_messages = []
+
     metrics_results_all_games = defaultdict(list)
 
     for game_dir in Path(DIRS_PREFIX).glob("*"):
@@ -948,32 +1059,45 @@ def main():
                                     mean_per_game_of_timing_diff_of_self_messages_by_humans,
                                     mean_per_game_of_timing_diff_of_self_messages_by_llm)
 
+        calc_mean_message_content_empiric_metrics(parsed_messages_by_phase, human_players,
+                                                  human_content_metrics, llm_content_metrics)
+        for phase in parsed_messages_by_phase:
+            all_messages.extend(phase.messages)
+
         for metric in metrics_results:
-            metrics_results_all_games[metric].append(np.array(metrics_results[metric]))
+            metrics_results_all_games[metric].append(metrics_results[metric])
 
     # TODO: uncomment out important parts when finished
 
-    # # 1.
+    # # # 1.
     # plot_percentage_bars_chart(did_llm_win_all_games, was_llm_voted_out_all_games,
     #                            did_mafia_win_all_games, is_llm_mafia_all_games)
+    #
+    # # 2.1.
+    # calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
+    #                                              llm_names_all_games)
 
-    # 2.1
-    calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
-                                                 llm_names_all_games)
+    # # 2.2.
+    # plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+    #                               mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+    #                               mean_per_game_of_timing_diff_of_self_messages_by_humans,
+    #                               mean_per_game_of_timing_diff_of_self_messages_by_llm)
 
-    # 2.2
-    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
-                                mean_per_game_of_timing_diff_of_messages_sent_by_llm,
-                                "TITLE TO CHANGE", "XLABEL TO CHANGE")
-    plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
-                                mean_per_game_of_timing_diff_of_self_messages_by_llm,
-                                "SELF TITLE TO CHANGE", "SELF XLABEL TO CHANGE")
+    # # 3.
+    # calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
+
+    # 4.
+    analyze_embeddings(all_messages)
+
+    # 5.
+    calc_players_metric(metrics_results_all_games)
 
     print("wait")
     ######## plot_metric_scores(metrics_results_all_games)
 
 
 if __name__ == '__main__':
+    print("CODE STARTED RUNNING (envs finished loading)")
     # preliminary_analysis_by_game()
     # get_games_statistics()
     # get_message_timings_statistics()
