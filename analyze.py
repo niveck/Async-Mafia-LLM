@@ -3,7 +3,7 @@ import re
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-from matplotlib import pyplot as plt  # TODO add matplotlib to requirements
+from matplotlib import pyplot as plt
 from sklearn.neighbors import KernelDensity
 from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, METRICS_TO_SCORE, \
     MESSAGE_PARSING_PATTERN, GAME_MANAGER_NAME, LLM_IDENTIFICATION, PERSONAL_SURVEY_FILE_FORMAT, \
@@ -11,10 +11,11 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
     GAME_CONFIG_FILE, PLAYERS_KEY_IN_CONFIG, CUTTING_TO_VOTE_MESSAGE, VOTING_MESSAGE_FORMAT, \
     VOTED_OUT_MESSAGE_FORMAT, VOTING_TIME_MESSAGE_FORMAT, DAYTIME_START_PREFIX, DAYTIME, \
     NIGHTTIME_START_PREFIX, NIGHTTIME, PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, \
-    PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY
-from game_status_checks import is_voted_out
+    PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY, \
+    MAFIA_ROLE, BYSTANDER_ROLE
+from game_status_checks import is_voted_out, all_players_joined
 from llm_players.llm_constants import LLM_CONFIG_KEY
-
+from mafia_main import is_win_by_mafia
 
 LAST_GAME_FROM_PILOT = 37
 
@@ -39,9 +40,18 @@ PHASE_END_SIGNAL = VOTING_TIME_MESSAGE_FORMAT.replace("{}", "")
 LENGTH, REPETITION, NUM_UNIQUE_WORDS = "length", "repetition", "num_unique_words"
 CONTENT_METRICS = [LENGTH, REPETITION, NUM_UNIQUE_WORDS]
 
-SENTENCE_EMBEDDING_MODEL = "prdev/mini-gte"
-# SENTENCE_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+# SENTENCE_EMBEDDING_MODEL = "prdev/mini-gte"
+SENTENCE_EMBEDDING_MODELS = ["prdev/mini-gte", "all-MiniLM-L6-v2", "all-MiniLM-L12-v2",
+                             "BAAI/bge-m3", "Alibaba-NLP/gte-multilingual-base"]
 REDUCED_DIM = 3
+PLOT_3D_COLOR_MAP = {
+    'Human-bystander-daytime': 'lightskyblue',
+    'Human-mafia-daytime': 'blue',
+    'Human-mafia-nighttime': 'darkblue',
+    'LLM-bystander-daytime': 'salmon',
+    'LLM-mafia-daytime': 'red',
+    'LLM-mafia-nighttime': 'darkred'
+}
 
 
 def avg(scores): return sum(scores) / len(scores)
@@ -150,10 +160,11 @@ def parse_messages_by_phase(parsed_messages: list[ParsedMessage], all_players, m
     current_mafia = [player for player in all_players if player in mafia_players]
     current_phase = Phase(active_players=current_players, is_daytime=is_daytime,
                           messages=parsed_messages[:1])
+    assert parsed_messages[0].manager_message_type == PHASE_START, "PROBLEM IN PARSING!"
     for message in parsed_messages[1:]:  # first one is always daytime announcement
         if message.manager_message_type == PHASE_START:  # first one is skipped
             all_phases.append(current_phase)
-            is_daytime = not is_daytime
+            is_daytime = message.manager_message_subject == DAYTIME
             active_players = current_players if is_daytime else current_mafia
             current_phase = Phase(active_players=active_players, is_daytime=is_daytime)  # new phase
         elif message.manager_message_type == WAS_VOTED_OUT:
@@ -167,13 +178,56 @@ def parse_messages_by_phase(parsed_messages: list[ParsedMessage], all_players, m
     return all_phases
 
 
+def decide_message_order(message: ParsedMessage):
+    """
+    An example from game 0030 that shows many Game-Manager of the same timestamp,
+    and their proper order - without this function their order was mixed!
+    [13:59:04] Ariel: Looks like he's looking to take out people
+    [13:59:09] Game-Manager: Daytime has ended, now it's time to vote! Waiting for all players to vote...
+    [13:59:19] Game-Manager: Adrian voted for Lennon
+    [13:59:25] Game-Manager: Ariel voted for Lennon
+    [13:59:27] Game-Manager: Jamie voted for Ariel
+    [13:59:27] Game-Manager: Morgan voted for Ariel
+    (now the conflict - pay attention for votes in both phases! - probably not possible to solve)
+    [13:59:39] Game-Manager: Lennon voted for Ariel
+    [13:59:39] Game-Manager: Ariel was voted out. Their role was mafia
+    [13:59:39] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
+    [13:59:39] Game-Manager: There is only one mafia member left, so no need for discussion - cutting straight to voting!
+    [13:59:39] Game-Manager: Nighttime has ended, now it's time to vote! Waiting for all players to vote...
+    [13:59:39] Game-Manager: Adrian voted for Lennon
+    [13:59:39] Game-Manager: Lennon was voted out. Their role was bystander
+    [13:59:39] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
+    """
+    if not message.is_manager:
+        return 7
+    if message.manager_message_type == WHO_VOTE_FOR:
+        return 1
+    if message.manager_message_type == WAS_VOTED_OUT:
+        return 2
+    if message.manager_message_type == PHASE_START:
+        if message.manager_message_subject == NIGHTTIME:
+            return 3
+        else:  # == DAYTIME
+            return 6
+    if message.manager_message_type == CUT_TO_VOTE:
+        return 4
+    if message.manager_message_type == PHASE_END:
+        if message.manager_message_subject == NIGHTTIME:
+            return 5
+        else:  # == DAYTIME
+            return 0
+    assert False, "An edge case was forgotten!"
+
+
 def parse_messages(game_dir, all_players, mafia_players, llm_player_name):
     manager_messages = (game_dir / PUBLIC_MANAGER_CHAT_FILE).read_text().splitlines()
     daytime_messages = (game_dir / PUBLIC_DAYTIME_CHAT_FILE).read_text().splitlines()
     nighttime_messages = (game_dir / PUBLIC_NIGHTTIME_CHAT_FILE).read_text().splitlines()
     all_messages = manager_messages + daytime_messages + nighttime_messages
+    # in some games there was a bug that multiplied messages: (still unique by timestamp and name)
+    all_messages = set(all_messages)
     parsed_messages = [ParsedMessage(message, llm_player_name) for message in all_messages]
-    parsed_messages.sort(key=lambda x: x.timestamp)
+    parsed_messages.sort(key=lambda x: (x.timestamp, decide_message_order(x)))
     parsed_messages_by_phase = parse_messages_by_phase(parsed_messages, all_players, mafia_players)
     return parsed_messages_by_phase
 
@@ -784,32 +838,91 @@ def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
     # plt.show()
 
 
-def analyze_embeddings(messages: list[ParsedMessage]):
-    # local imports to reduce time when not running this analysis
-    from sentence_transformers import SentenceTransformer
-    from sklearn.decomposition import PCA
-    messages = [message for message in messages if not message.is_manager]
-    model = SentenceTransformer(SENTENCE_EMBEDDING_MODEL)
-    embeddings = model.encode([message.content for message in messages])
-    llm_identities = [int(message.is_llm) for message in messages]
-    assert REDUCED_DIM in (2, 3)
-    reduced_dimension_embedding = PCA(n_components=REDUCED_DIM).fit_transform(embeddings)
-    fig = plt.figure()
-    if REDUCED_DIM == 3:
-        ax = fig.gca(projection='3d')
-        ax.scatter(reduced_dimension_embedding[:, 0],
-                   reduced_dimension_embedding[:, 1],
-                   reduced_dimension_embedding[:, 2],
-                   c=llm_identities,
-                   # s=MARKER_SIZE,
-                   )
-    else:  # REDUCED_DIM == 2
-        plt.scatter(reduced_dimension_embedding[:, 0],
-                    reduced_dimension_embedding[:, 1],
-                    c=llm_identities,
-                    # s=MARKER_SIZE,
-                    )
-    plt.show()
+def analyze_embeddings(messages: list[ParsedMessage], is_mafia_all_player_messages: list[bool],
+                       is_daytime_all_player_messages: list[bool]):
+    llm_identities = [message.is_llm for message in messages]
+    labels, colors = [], []
+    """
+problematic_messages = []
+for i, is_llm in enumerate(llm_identities):
+    player_type = "LLM" if is_llm else "Human"
+    role = "mafia" if is_mafia_all_player_messages[i] else "bystander"
+    phase = "daytime" if is_daytime_all_player_messages[i] else "nighttime"
+    label = f"{player_type}-{role}-{phase}"
+    labels.append(label)
+    if label not in PLOT_3D_COLOR_MAP.keys():
+        problematic_messages.append((label, messages[i]))
+        
+len(problematic_messages)
+9
+
+import pprint
+pprint.pprint(problematic_messages)
+[
+ ('Human-bystander-nighttime',
+  [20:52:45] Parker: sutton, are you here? are you),
+ ('Human-bystander-nighttime',
+  [20:52:46] Gray: Sutton I slept with your mom last night),
+ ('Human-bystander-nighttime', [13:56:39] Harper: 2),
+ ('LLM-bystander-nighttime',
+  [13:55:17] Morgan: I think Riley's sudden claim of being a bystander is suspicious, and I'd like to vote for Riley.),
+ ('Human-bystander-nighttime', 
+  [21:39:03] Adrian: writinggg),
+ ('Human-bystander-nighttime', 
+  [21:41:32] Adrian: oh nooo)
+ ]
+    """
+    for i, is_llm in enumerate(llm_identities):
+        player_type = "LLM" if is_llm else "Human"
+        role = MAFIA_ROLE if is_mafia_all_player_messages[i] else BYSTANDER_ROLE
+        phase = DAYTIME if is_daytime_all_player_messages[i] else NIGHTTIME
+        if role == BYSTANDER_ROLE and phase == NIGHTTIME:
+            phase = DAYTIME  # message was sent in a delay due to a bug
+        label = f"{player_type}-{role}-{phase.lower()}"
+        labels.append(label)
+        colors.append(PLOT_3D_COLOR_MAP[label])
+    for model_name in SENTENCE_EMBEDDING_MODELS:
+        embedding_3d = get_embeddings_3d(messages, model_name=model_name)
+        assert len(embedding_3d) == len(is_mafia_all_player_messages), "Wrong saved embeddings!"
+        # local imports to reduce time when not running this analysis
+        import plotly.express as px
+        import pandas as pd
+        df = pd.DataFrame(embedding_3d, columns=["PC1", "PC2", "PC3"])
+        # df["llm_identities"] = llm_identities  # Add identities as a column
+        df["colors"] = colors
+        fig = px.scatter_3d(df, x='PC1', y='PC2', z='PC3',
+                            color=colors,
+                            title='3D PCA Visualization')
+        fig.write_html(f"{model_name.replace('/', '_')}_3d_plot.html")
+        print("wait after saving HTML")
+        """
+sum([(not is_mafia and not is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
+136
+sum([(is_mafia and not is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
+239
+sum([(is_mafia and is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
+555
+        """  # TODO REMOVE!
+
+
+def get_embeddings_3d(messages: list[ParsedMessage], model_name=SENTENCE_EMBEDDING_MODELS[0]):
+    USE_SAVED_EMBEDDINGS = True
+    model_name_for_path = model_name.replace("/", "_")
+    embeddings_path = ANALYSIS_DIR / f"embeddings_3d_{model_name_for_path}.npy"
+    if USE_SAVED_EMBEDDINGS:
+        return np.load(embeddings_path)
+    else:
+        # local imports to reduce time when not running this analysis
+        from sentence_transformers import SentenceTransformer
+        from sklearn.decomposition import PCA
+        try:
+            model = SentenceTransformer(model_name)
+        except ValueError:
+            model = SentenceTransformer(model_name, trust_remote_code=True)
+        embeddings = model.encode([message.content for message in messages])
+        embeddings_3d = PCA(n_components=3).fit_transform(embeddings)
+        np.save(embeddings_path, embeddings_3d)
+        return embeddings_3d
 
 
 def plot_percentage_bars_chart(did_llm_win, was_llm_voted_out, did_mafia_win, is_llm_mafia):
@@ -1031,16 +1144,26 @@ def main():
     human_content_metrics = {metric: [] for metric in CONTENT_METRICS}
     llm_content_metrics = {metric: [] for metric in CONTENT_METRICS}
 
-    all_messages = []
+    all_player_messages = []
+    is_mafia_all_player_messages = []
+    is_daytime_all_player_messages = []
 
     metrics_results_all_games = defaultdict(list)
 
     for game_dir in Path(DIRS_PREFIX).glob("*"):
         game_id = game_dir.name
-        if not (game_dir.is_dir() and game_id.isdigit() and "00001" not in game_id):
+        # TODO: return the following lines!
+        # if not (game_dir.is_dir() and game_id.isdigit() and "00001" not in game_id):
+        #     continue
+        # TODO: this is just a patch to work remotely with all games including my testing games:
+        if game_id not in [
+            "0027", "0028", "0030", "0032", "0036", "0037",  # pilot
+            "0051", "0056", "0057","0058", "0059", "0060",  # aquarium
+            "0064", "0065", "0067", "0068", "0069", "0070", "0071", "0072", "0073" # pizza night
+        ]:
             continue
 
-        llm_player_name, __all_players, __mafia_players, human_players, __config, \
+        llm_player_name, __all_players, mafia_players, human_players, __config, \
             metrics_results, __all_comments, parsed_messages_by_phase, was_llm_voted_out, \
             is_llm_mafia, did_mafia_win, did_llm_win = get_single_game_results(game_id)
 
@@ -1062,7 +1185,11 @@ def main():
         calc_mean_message_content_empiric_metrics(parsed_messages_by_phase, human_players,
                                                   human_content_metrics, llm_content_metrics)
         for phase in parsed_messages_by_phase:
-            all_messages.extend(phase.messages)
+            player_messages = [message for message in phase.messages if not message.is_manager]
+            is_mafia_by_order = [message.name in mafia_players for message in player_messages]
+            all_player_messages.extend(player_messages)
+            is_mafia_all_player_messages.extend(is_mafia_by_order)
+            is_daytime_all_player_messages.extend([phase.is_daytime] * len(player_messages))
 
         for metric in metrics_results:
             metrics_results_all_games[metric].append(metrics_results[metric])
@@ -1087,10 +1214,11 @@ def main():
     # calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
 
     # 4.
-    analyze_embeddings(all_messages)
+    analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
+                       is_daytime_all_player_messages)
 
-    # 5.
-    calc_players_metric(metrics_results_all_games)
+    # # 5.
+    # calc_players_metric(metrics_results_all_games)
 
     print("wait")
     ######## plot_metric_scores(metrics_results_all_games)
