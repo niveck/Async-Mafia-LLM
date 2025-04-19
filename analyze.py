@@ -15,7 +15,7 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
     MAFIA_ROLE, BYSTANDER_ROLE
 from game_status_checks import is_voted_out, all_players_joined
 from llm_players.llm_constants import LLM_CONFIG_KEY
-from mafia_main import is_win_by_mafia
+
 
 LAST_GAME_FROM_PILOT = 37
 
@@ -41,8 +41,9 @@ LENGTH, REPETITION, NUM_UNIQUE_WORDS = "length", "repetition", "num_unique_words
 CONTENT_METRICS = [LENGTH, REPETITION, NUM_UNIQUE_WORDS]
 
 # SENTENCE_EMBEDDING_MODEL = "prdev/mini-gte"
-SENTENCE_EMBEDDING_MODELS = ["prdev/mini-gte", "all-MiniLM-L6-v2", "all-MiniLM-L12-v2",
-                             "BAAI/bge-m3", "Alibaba-NLP/gte-multilingual-base"]
+# SENTENCE_EMBEDDING_MODELS = ["prdev/mini-gte", "all-MiniLM-L6-v2", "all-MiniLM-L12-v2",
+#                              "BAAI/bge-m3", "Alibaba-NLP/gte-multilingual-base"]
+SENTENCE_EMBEDDING_MODELS = ["BAAI/bge-m3"]
 REDUCED_DIM = 3
 PLOT_3D_COLOR_MAP = {
     'Human-bystander-daytime': 'lightskyblue',
@@ -808,7 +809,7 @@ def plot_timing_histogram(messages, title):
 
 
 def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
-                                xlabel, plot_name, ax, kde_bandwidth=1):
+                                xlabel, plot_name, ax, kde_bandwidth: float = 1):
     # plt.title(title)
     # plt.xlabel(xlabel)
     # plt.ylabel("Proportion (density)")
@@ -824,7 +825,7 @@ def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
         timing_diffs_squeezed = np.array(timing_diffs)[:, np.newaxis]
         kde_timing_diffs = KernelDensity(
             kernel="gaussian",bandwidth=kde_bandwidth).fit(timing_diffs_squeezed)
-        x_range = np.linspace(-1, max_x + 5, 1000)
+        x_range = np.linspace(0, max_x + 5, 1000)
         log_density = kde_timing_diffs.score_samples(x_range[:, np.newaxis])
         # plt.fill_between(
         ax.fill_between(
@@ -838,91 +839,102 @@ def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
     # plt.show()
 
 
-def analyze_embeddings(messages: list[ParsedMessage], is_mafia_all_player_messages: list[bool],
-                       is_daytime_all_player_messages: list[bool]):
-    llm_identities = [message.is_llm for message in messages]
-    labels, colors = [], []
-    """
-problematic_messages = []
-for i, is_llm in enumerate(llm_identities):
-    player_type = "LLM" if is_llm else "Human"
-    role = "mafia" if is_mafia_all_player_messages[i] else "bystander"
-    phase = "daytime" if is_daytime_all_player_messages[i] else "nighttime"
-    label = f"{player_type}-{role}-{phase}"
-    labels.append(label)
-    if label not in PLOT_3D_COLOR_MAP.keys():
-        problematic_messages.append((label, messages[i]))
-        
-len(problematic_messages)
-9
+def separate_embedding_classes(embeddings: np.ndarray, model_name: str,
+                               named_classes: list[tuple[list[bool], str]]):
+    # local imports to reduce time when not running this analysis
+    from sklearn.svm import SVC
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, \
+        QuadraticDiscriminantAnalysis
+    from sklearn.metrics import classification_report
+    named_classifiers = [
+        (SVC, dict(kernel="linear"), "Linear SVM"),
+        (SVC, dict(kernel="poly", degree=3), "Polynomial (deg=3) SVM"),
+        # (SVC, dict(kernel="rbf"), "Gaussiam SVM"),
+        # (SVC, dict(kernel="sigmoid"), "Sigmoid SVM"),
+        (LogisticRegression, dict(solver="liblinear"), "Logistic Regression"),
+        (LinearDiscriminantAnalysis, {}, "LDA"),
+        # (QuadraticDiscriminantAnalysis, dict(reg_param=0.5), "QDA"),
+    ]
+    print(f"\nSeparating the embeddings of {model_name} with classifiers:\n")
+    for classes, class_name in named_classes:
+        print(f"Separating by {class_name}:\n")
+        for classifier, params, classifier_name in named_classifiers:
+            print(f"Performance of {classifier_name}:")
+            prediction = classifier(**params).fit(embeddings, classes).predict(embeddings)
+            print(classification_report(classes, prediction))
 
-import pprint
-pprint.pprint(problematic_messages)
-[
- ('Human-bystander-nighttime',
-  [20:52:45] Parker: sutton, are you here? are you),
- ('Human-bystander-nighttime',
-  [20:52:46] Gray: Sutton I slept with your mom last night),
- ('Human-bystander-nighttime', [13:56:39] Harper: 2),
- ('LLM-bystander-nighttime',
-  [13:55:17] Morgan: I think Riley's sudden claim of being a bystander is suspicious, and I'd like to vote for Riley.),
- ('Human-bystander-nighttime', 
-  [21:39:03] Adrian: writinggg),
- ('Human-bystander-nighttime', 
-  [21:41:32] Adrian: oh nooo)
- ]
-    """
-    for i, is_llm in enumerate(llm_identities):
+
+def analyze_embeddings(messages: list[ParsedMessage], is_mafia_all_messages: list[bool],
+                       is_daytime_all_messages: list[bool]):
+    is_llm_all_messages = [message.is_llm for message in messages]
+    labels, colors = [], []
+    for i, is_llm in enumerate(is_llm_all_messages):
         player_type = "LLM" if is_llm else "Human"
-        role = MAFIA_ROLE if is_mafia_all_player_messages[i] else BYSTANDER_ROLE
-        phase = DAYTIME if is_daytime_all_player_messages[i] else NIGHTTIME
+        role = MAFIA_ROLE if is_mafia_all_messages[i] else BYSTANDER_ROLE
+        phase = DAYTIME if is_daytime_all_messages[i] else NIGHTTIME
         if role == BYSTANDER_ROLE and phase == NIGHTTIME:
             phase = DAYTIME  # message was sent in a delay due to a bug
+            is_daytime_all_messages[i] = True
         label = f"{player_type}-{role}-{phase.lower()}"
         labels.append(label)
-        colors.append(PLOT_3D_COLOR_MAP[label])
+    np.random.seed(0)
+    import plotly.express as px
+    import pandas as pd
+    from sklearn.decomposition import PCA
     for model_name in SENTENCE_EMBEDDING_MODELS:
-        embedding_3d = get_embeddings_3d(messages, model_name=model_name)
-        assert len(embedding_3d) == len(is_mafia_all_player_messages), "Wrong saved embeddings!"
-        # local imports to reduce time when not running this analysis
-        import plotly.express as px
-        import pandas as pd
-        df = pd.DataFrame(embedding_3d, columns=["PC1", "PC2", "PC3"])
-        # df["llm_identities"] = llm_identities  # Add identities as a column
-        df["colors"] = colors
-        fig = px.scatter_3d(df, x='PC1', y='PC2', z='PC3',
-                            color=colors,
-                            title='3D PCA Visualization')
-        fig.write_html(f"{model_name.replace('/', '_')}_3d_plot.html")
-        print("wait after saving HTML")
-        """
-sum([(not is_mafia and not is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
-136
-sum([(is_mafia and not is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
-239
-sum([(is_mafia and is_datime) for is_mafia, is_datime in zip(is_mafia_all_player_messages, is_daytime_all_player_messages)])
-555
-        """  # TODO REMOVE!
+        embeddings = get_embeddings(messages, model_name=model_name)
+        named_classes = [(is_llm_all_messages, "is_llm"), (is_mafia_all_messages, "is_mafia"),
+                         (is_daytime_all_messages, "is_daytime")]
+        separate_embedding_classes(embeddings, model_name, named_classes)
+        # local imports to reduce time when not running this analysis  # TODO: put outside of for loop
+        # embeddings_3d = PCA(n_components=3).fit_transform(embeddings)
+        embedding_pca_3d = PCA(n_components=3).fit(embeddings)
+        embeddings_3d = embedding_pca_3d.transform(embeddings)
+        explain_variance_ratios = embedding_pca_3d.explained_variance_ratio_
+        print(f"Explained variance ratios for PCA 3D on {model_name}'s embeddings:")
+        print(*[f"PC{i + 1}: {ratio:.3}" for i, ratio in enumerate(explain_variance_ratios)], sep="\n")
+        print(f"Sum of explained variance ratios: {sum(explain_variance_ratios):.3}")
+        # compare classifiers to 3D embeddings
+        separate_embedding_classes(embeddings_3d, model_name, named_classes)
+        full_df = pd.DataFrame(embeddings_3d, columns=["PC1", "PC2", "PC3"])
+        full_df["labels"] = labels
+        for df, title_addition in [
+            (full_df, " - all"),
+            (full_df[is_llm_all_messages], " - only LLM"),
+            (full_df[~np.array(is_llm_all_messages)], " - only Human"),
+            (full_df[is_mafia_all_messages], " - only mafia"),
+            (full_df[~np.array(is_mafia_all_messages)], " - only bystander"),
+            (full_df[is_daytime_all_messages], " - only daytime"),
+            (full_df[~np.array(is_daytime_all_messages)], " - only nighttime"),
+        ]:
+            fig = px.scatter_3d(df, x="PC1", y="PC2", z="PC3",
+                                color="labels", size=np.ones(len(df)) * 0.5, opacity=1,
+                                color_discrete_map=PLOT_3D_COLOR_MAP,
+                                category_orders={"color": sorted(PLOT_3D_COLOR_MAP.keys())},
+                                title='3D PCA Visualization' + title_addition)
+            model_name = model_name.replace('/', '_')
+            title_addition = title_addition.replace(" ", "_")
+            fig.write_html(ANALYSIS_DIR / f"{model_name}_3d_plot{title_addition}.html")
+        print("wait after saving HTMLs")
 
 
-def get_embeddings_3d(messages: list[ParsedMessage], model_name=SENTENCE_EMBEDDING_MODELS[0]):
-    USE_SAVED_EMBEDDINGS = True
+def get_embeddings(messages: list[ParsedMessage], model_name=SENTENCE_EMBEDDING_MODELS[0]):
     model_name_for_path = model_name.replace("/", "_")
-    embeddings_path = ANALYSIS_DIR / f"embeddings_3d_{model_name_for_path}.npy"
-    if USE_SAVED_EMBEDDINGS:
-        return np.load(embeddings_path)
-    else:
-        # local imports to reduce time when not running this analysis
-        from sentence_transformers import SentenceTransformer
-        from sklearn.decomposition import PCA
-        try:
-            model = SentenceTransformer(model_name)
-        except ValueError:
-            model = SentenceTransformer(model_name, trust_remote_code=True)
-        embeddings = model.encode([message.content for message in messages])
-        embeddings_3d = PCA(n_components=3).fit_transform(embeddings)
-        np.save(embeddings_path, embeddings_3d)
-        return embeddings_3d
+    embeddings_path = ANALYSIS_DIR / f"embeddings_full_{model_name_for_path}.npy"
+    if embeddings_path.exists():
+        embeddings = np.load(embeddings_path)
+        if len(embeddings) == len(messages):
+            return embeddings  # else, they are not updated
+    # local imports to reduce time when not running this analysis
+    from sentence_transformers import SentenceTransformer
+    try:
+        model = SentenceTransformer(model_name)
+    except ValueError:
+        model = SentenceTransformer(model_name, trust_remote_code=True)
+    embeddings = model.encode([message.content for message in messages])
+    np.save(embeddings_path, embeddings)
+    return embeddings
 
 
 def plot_percentage_bars_chart(did_llm_win, was_llm_voted_out, did_mafia_win, is_llm_mafia):
@@ -978,12 +990,13 @@ def calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_ga
                     else human_player_daytime_message_amount
                 message_amounts.append(len([msg for msg in phase.messages
                                             if msg.name == player_name]))
-    print(f"*Player type* | *Mean* | *STD*")
+    print("Now in Latex table format:")
+    print(fr"Player Type & Mean & STD \\")
     for player_type, all_amounts in [("Human", human_player_daytime_message_amount),
                                      ("LLM", llm_player_daytime_message_amount),
                                      ("All players", human_player_daytime_message_amount
                                                      + llm_player_daytime_message_amount)]:
-        print(f"{player_type} | {np.mean(all_amounts):.2f} | {np.std(all_amounts):.2f}")
+        print(fr"{player_type} & {np.mean(all_amounts):.2f} & {np.std(all_amounts):.2f} \\")
     print("\n")
 
 
@@ -1031,7 +1044,7 @@ def plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_
                                 "and the Previous Message by Any Other Player",
                                 "Player's Average Waiting Time From Another Message (seconds)",
                                 "mean_time_diff_msg_to_any_prev",
-                                axs[0], kde_bandwidth=1)  # TODO: change when there is more data
+                                axs[0], kde_bandwidth=1.5)  # TODO: change when there is more data
     plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
                                 mean_per_game_of_timing_diff_of_self_messages_by_llm,
                                 "Distribution of Average Time Difference Between\n"
@@ -1106,8 +1119,42 @@ def calc_players_metric(metrics_results_all_games: defaultdict[str, list[int]]):
                   f"{np.mean(all_results):.2f} & {np.std(all_results):.2f} \\\\")
 
 
+def calc_dataset_metadat(parsed_messages_by_phase_all_games: list[list[Phase]]):
+    print("*** Dataset Metadata ***")
+    all_messages_by_game = [sum([phase.messages for phase in game], [])
+                            for game in parsed_messages_by_phase_all_games]
+    all_messages_unified = sum(all_messages_by_game, [])
+    num_games = len(parsed_messages_by_phase_all_games)
+    num_messages = len(all_messages_unified)
+    avg_num_messages_per_game = num_messages / num_games
+    num_llm_messages = sum([message.is_llm for message in all_messages_unified])
+    avg_num_llm_messages_per_game = num_llm_messages / num_games
+    avg_num_phases = avg([len(game) for game in parsed_messages_by_phase_all_games])
+    num_players_per_game = [len(game[0].active_players) for game in parsed_messages_by_phase_all_games]
+    avg_num_players = avg(num_players_per_game)
+    print(f"Our dataset consists of {num_games} games, with a total of {num_messages} messages "
+          f"({avg_num_messages_per_game:.2f} messages per game on average), "
+          f"{num_llm_messages} of which were sent by the LLM-agent "
+          f"({avg_num_llm_messages_per_game:.2f} per game on average).\n")
+    print(f"NOW in Latex table format:")
+    print(fr"{num_games} & {avg_num_phases:.2f} & {avg_num_players:.2f} "
+          fr"& {avg_num_messages_per_game:.2f} & {avg_num_llm_messages_per_game:.2f} \\")
+    print(f"\nGames Played.\n")
+    print(f"The number of players per game ranged from {min(num_players_per_game)} "
+          f"to {max(num_players_per_game)} ({avg_num_players:.2f} average, "
+          f"{np.std(num_players_per_game):.2f} STD). "
+          f"Games with 10 or fewer players included 2 mafia members, "
+          f"while games with more than 10 players included 3. "
+          f"Every game included one LLM-agent as a player.")
+    print("\n***\nREMEMBER to manually check statistics for num games played by a player!\n")
+
+
 def main():
     # Should include:
+    # 0. Dataset metadat
+    # 0.1. Consisting of # games & # messages
+    # 0.2. Table: General information for all games in dataset
+    # 0.3. Number of players per game
     # 1. LLM-Agent Performance in Game:
     # 1.1 Percentage plots (instead of Pie Chats like in LIMA) of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
     # 2. Message Quantity:
@@ -1196,35 +1243,38 @@ def main():
 
     # TODO: uncomment out important parts when finished
 
-    # # # 1.
-    # plot_percentage_bars_chart(did_llm_win_all_games, was_llm_voted_out_all_games,
-    #                            did_mafia_win_all_games, is_llm_mafia_all_games)
-    #
-    # # 2.1.
-    # calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
-    #                                              llm_names_all_games)
+    # 0.
+    calc_dataset_metadat(parsed_messages_by_phase_all_games)
 
-    # # 2.2.
-    # plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
-    #                               mean_per_game_of_timing_diff_of_messages_sent_by_llm,
-    #                               mean_per_game_of_timing_diff_of_self_messages_by_humans,
-    #                               mean_per_game_of_timing_diff_of_self_messages_by_llm)
+    # 1.
+    plot_percentage_bars_chart(did_llm_win_all_games, was_llm_voted_out_all_games,
+                               did_mafia_win_all_games, is_llm_mafia_all_games)
 
-    # # 3.
-    # calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
+    # 2.1.
+    calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
+                                                 llm_names_all_games)
+
+    # 2.2.
+    plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                  mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_llm)
+
+    # 3.
+    calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
 
     # 4.
+    # TODO: remember I fix is_daytime here!
     analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
                        is_daytime_all_player_messages)
 
-    # # 5.
-    # calc_players_metric(metrics_results_all_games)
+    # 5.
+    calc_players_metric(metrics_results_all_games)
 
     print("wait")
-    ######## plot_metric_scores(metrics_results_all_games)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("CODE STARTED RUNNING (envs finished loading)")
     # preliminary_analysis_by_game()
     # get_games_statistics()
