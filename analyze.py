@@ -937,37 +937,44 @@ def get_embeddings(messages: list[ParsedMessage], model_name=SENTENCE_EMBEDDING_
     return embeddings
 
 
-def plot_percentage_bars_chart(did_llm_win, was_llm_voted_out, did_mafia_win, is_llm_mafia):
+def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
+                               did_human_win_as_mafia, did_human_win_as_bystander):
     # Percentage plots of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
-    # did_llm_win_alive = []
     did_llm_win_as_mafia = []
     did_llm_win_as_bystander = []
-    # did_llm_win_alive_as_mafia = []
-    # did_llm_win_alive_as_bystander = []
     for i, llm_win in enumerate(did_llm_win):
-        # llm_win_alive = llm_win and was_llm_voted_out[i]
-        # did_llm_win_alive.append(llm_win_alive)
         if is_llm_mafia[i]:
             did_llm_win_as_mafia.append(llm_win)
-            # did_llm_win_alive_as_mafia.append(llm_win_alive)
         else:
             did_llm_win_as_bystander.append(llm_win)
-            # did_llm_win_alive_as_bystander.append(llm_win_alive)
-    default_true_color, default_false_color = "royalblue", "lightblue"  # "darkblue", "slateblue"  # "darkred", "indianred"
-    for label, values, true_color, false_color in [
-        ("LLM Win", did_llm_win, default_true_color, default_false_color),
-        # ("LLM Win A", did_llm_win_alive, default_true_color, default_false_color),
-        ("LLM Win as Bystander", did_llm_win_as_bystander, default_true_color, default_false_color),
-        # ("LLM Win A (B)", did_llm_win_alive_as_bystander, default_true_color, default_false_color),
-        ("LLM Win as Mafia", did_llm_win_as_mafia, default_true_color, default_false_color),
-        # ("LLM Win A (M)", did_llm_win_alive_as_mafia, default_true_color, default_false_color),
-        ("Mafia Win", did_mafia_win, default_true_color, default_false_color),
-        ("LLM is Mafia", is_llm_mafia, default_true_color, default_false_color),
-                                                  ][::-1]:
+    # default_true_color, default_false_color = "royalblue", "lightblue"  # "darkblue", "slateblue"  # "darkred", "indianred"
+    human_true_color, human_false_color = "mediumblue", "cornflowerblue"
+    llm_true_color, llm_false_color = "darkred", "indianred"
+    plt.figure(figsize=(8, 4))
+    ax = plt.subplot(1, 1, 1)  # used to merge X-axis
+    ax.yaxis.tick_right()
+    for false_label, false_color in [
+        ("Human Loses", human_false_color),
+        ("LLM Loses", llm_false_color),
+        ("Human Loses as Bystander", human_false_color),
+        ("LLM Loses as Bystander", llm_false_color),
+        ("Human Loses as Mafia", human_false_color),
+        ("LLM Loses as Mafia", llm_false_color)
+    ][::-1]:
+        plt.barh(false_label, 1, color=false_color)
+    plt.subplot(1, 1, 1, sharex=ax, frameon=False)
+    for true_label, values, true_color in [
+        ("Human Wins", did_human_win_as_mafia + did_human_win_as_bystander, human_true_color),
+        ("LLM Wins", did_llm_win, llm_true_color),
+        ("Human Wins as Bystander", did_human_win_as_bystander, human_true_color),
+        ("LLM Wins as Bystander", did_llm_win_as_bystander, llm_true_color),
+        ("Human Wins as Mafia", did_human_win_as_mafia, human_true_color),
+        ("LLM Wins as Mafia", did_llm_win_as_mafia, llm_true_color),
+    ][::-1]:
         true_percent = avg(values)
-        plt.barh(label, 1, color=false_color)
-        plt.barh(label, true_percent, color=true_color)
-        plt.text(true_percent, label, f"{true_percent * 100:.2f}%", va="center")
+        plt.barh(true_label, true_percent, color=true_color)
+        plt.text(true_percent, true_label, f"{true_percent * 100:.2f}% ", va="center", ha="right", c="white")
+        plt.text(true_percent, true_label, f" {(1 - true_percent) * 100:.2f}%", va="center", ha="left")
     plt.xlim(0, 1)
     plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1],
                ["0%", "20%", "40%", "60%", "80%", "100%"])
@@ -991,12 +998,12 @@ def calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_ga
                 message_amounts.append(len([msg for msg in phase.messages
                                             if msg.name == player_name]))
     print("Now in Latex table format:")
-    print(fr"Player Type & Mean & STD \\")
+    print(fr"\textbf{{Player Type}} & \textbf{{Avg \# Msg ($\pm$ STD)}} \\")
     for player_type, all_amounts in [("Human", human_player_daytime_message_amount),
                                      ("LLM", llm_player_daytime_message_amount),
-                                     ("All players", human_player_daytime_message_amount
-                                                     + llm_player_daytime_message_amount)]:
-        print(fr"{player_type} & {np.mean(all_amounts):.2f} & {np.std(all_amounts):.2f} \\")
+                                     # ("All players", human_player_daytime_message_amount + llm_player_daytime_message_amount)
+                                     ]:
+        print(fr"{player_type} & {display_mean_std(all_amounts)} \\")
     print("\n")
 
 
@@ -1042,7 +1049,7 @@ def plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_
                                 mean_per_game_of_timing_diff_of_messages_sent_by_llm,
                                 "Distribution of Average Time Between a Player's Message\n"
                                 "and the Previous Message by Any Other Player",
-                                "Player's Average Waiting Time From Another Message (seconds)",
+                                "Player's Average Waiting Time From Previous Message (seconds)",
                                 "mean_time_diff_msg_to_any_prev",
                                 axs[0], kde_bandwidth=1.5)  # TODO: change when there is more data
     plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
@@ -1104,6 +1111,8 @@ def display_mean_std(metric_list):
 def calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics):
     print("Player type, then metrics by order:", ", ".join(CONTENT_METRICS))
     print("Now in Latex table format:")
+    print(fr"\textbf{{Player Type}} & \textbf{{\# Words Per Message}} & "
+          fr"\textbf{{\# Repeated Messages}} & \textbf{{\#  Unique Words}} \\")
     for player_type, metric_lists in [("Human", human_content_metrics),
                                       ("LLM", llm_content_metrics)]:
         print(f"{player_type} & {' & '.join([display_mean_std(metric_lists[metric]) for metric in CONTENT_METRICS])}" + " \\\\")
@@ -1113,13 +1122,13 @@ def calc_players_metric(metrics_results_all_games: defaultdict[str, list[int]]):
     for metric, results_by_game in metrics_results_all_games.items():
         all_results = sum(results_by_game, [])
         if metric == LLM_IDENTIFICATION:
-            print(f"{metric}: {np.mean(all_results) * 100:.2f}%")
+            print(f"\n{metric}: {np.mean(all_results) * 100:.2f}%\n")
         else:
-            print(f"{metric.upper()}: MEAN, STD -\n"
-                  f"{np.mean(all_results):.2f} & {np.std(all_results):.2f} \\\\")
+            print(f"% {metric.upper()}: MEAN, STD -\n"
+                  f"{{COPY_HERE_NAME}} & {display_mean_std(all_results)} \\\\")
 
 
-def calc_dataset_metadat(parsed_messages_by_phase_all_games: list[list[Phase]]):
+def calc_dataset_metadata(parsed_messages_by_phase_all_games: list[list[Phase]]):
     print("*** Dataset Metadata ***")
     all_messages_by_game = [sum([phase.messages for phase in game], [])
                             for game in parsed_messages_by_phase_all_games]
@@ -1149,6 +1158,44 @@ def calc_dataset_metadat(parsed_messages_by_phase_all_games: list[list[Phase]]):
     print("\n***\nREMEMBER to manually check statistics for num games played by a player!\n")
 
 
+def add_human_winning_statistics(human_players, mafia_players, did_mafia_win,
+                                 did_human_win_as_mafia_all_games,
+                                 did_human_win_as_bystander_all_games):
+    for player in human_players:
+        if player in mafia_players:
+            did_human_win_as_mafia_all_games.append(did_mafia_win)
+        else:
+            did_human_win_as_bystander_all_games.append(not did_mafia_win)
+
+
+def check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_all_games: list[list[Phase]]):
+    MAX_DAYTIME_NUM = 6
+    num_messages_per_phase = {i + 1: [] for i in range(MAX_DAYTIME_NUM)}  # by phase index
+    for game in parsed_messages_by_phase_all_games:
+        phase_counter = 0
+        for phase in game:
+            if not phase.is_daytime:
+                continue
+            phase_counter += 1
+            if phase_counter not in num_messages_per_phase:
+                continue
+            num_messages_per_phase[phase_counter].append(len(phase.messages))
+    means, means_p_std, means_m_std = [], [], []
+    for num_messages in num_messages_per_phase.values():
+        mean, std = np.mean(num_messages), np.std(num_messages)
+        means.append(mean)
+        means_p_std.append(mean + std)
+        means_m_std.append(mean - std)
+    plt.fill_between(num_messages_per_phase.keys(), means_p_std, means_m_std, alpha=0.3,
+                     label=r"mean $\pm$ STD", color="C0")
+    plt.plot(num_messages_per_phase.keys(), means, label="mean", color="C0", marker="o")
+    plt.ylim(0, max(sum(num_messages_per_phase.values(), [])))
+    plt.xlabel("Daytime index in game")
+    plt.ylabel("Num messages in a daytime phase")
+    plt.legend()
+    plt.show()
+
+
 def main():
     # Should include:
     # 0. Dataset metadat
@@ -1159,6 +1206,7 @@ def main():
     # 1.1 Percentage plots (instead of Pie Chats like in LIMA) of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
     # 2. Message Quantity:
     # 2.1 Table: Amount of messages sent by a player during a daytime phase.
+    # 2.1.1. Plot or just check: average and STD of num messages per phase (check if stays similar through the phases - indicating that the fewer people need to fill the void with more messages)
     # 2.2 Smoothed Histograms - averaged time differences for a player in a game:
     # 2.2.1 between a message and the previous one by anyone
     # 2.2.2 between a message and the previous one by the same player!
@@ -1177,6 +1225,8 @@ def main():
     did_llm_win_all_games = []
     was_llm_voted_out_all_games = []
     is_llm_mafia_all_games = []
+    did_human_win_as_mafia_all_games = []
+    did_human_win_as_bystander_all_games = []
 
     parsed_messages_by_phase_all_games = []
     llm_names_all_games = []
@@ -1218,6 +1268,9 @@ def main():
         did_llm_win_all_games.append(did_llm_win)
         was_llm_voted_out_all_games.append(was_llm_voted_out)
         is_llm_mafia_all_games.append(is_llm_mafia)
+        add_human_winning_statistics(human_players, mafia_players, did_mafia_win,
+                                     did_human_win_as_mafia_all_games,
+                                     did_human_win_as_bystander_all_games)
 
         parsed_messages_by_phase_all_games.append(parsed_messages_by_phase)
         llm_names_all_games.append(llm_player_name)
@@ -1243,33 +1296,35 @@ def main():
 
     # TODO: uncomment out important parts when finished
 
-    # 0.
-    calc_dataset_metadat(parsed_messages_by_phase_all_games)
+    # # 0.
+    # calc_dataset_metadata(parsed_messages_by_phase_all_games)
 
-    # 1.
-    plot_percentage_bars_chart(did_llm_win_all_games, was_llm_voted_out_all_games,
-                               did_mafia_win_all_games, is_llm_mafia_all_games)
+    # # 1.
+    # plot_percentage_bars_chart(did_llm_win_all_games, is_llm_mafia_all_games,
+    #                            did_human_win_as_mafia_all_games,
+    #                            did_human_win_as_bystander_all_games)
 
     # 2.1.
     calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
                                                  llm_names_all_games)
+    check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_all_games)
 
-    # 2.2.
-    plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
-                                  mean_per_game_of_timing_diff_of_messages_sent_by_llm,
-                                  mean_per_game_of_timing_diff_of_self_messages_by_humans,
-                                  mean_per_game_of_timing_diff_of_self_messages_by_llm)
+    # # 2.2.
+    # plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+    #                               mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+    #                               mean_per_game_of_timing_diff_of_self_messages_by_humans,
+    #                               mean_per_game_of_timing_diff_of_self_messages_by_llm)
 
-    # 3.
-    calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
+    # # 3.
+    # calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
 
-    # 4.
-    # TODO: remember I fix is_daytime here!
-    analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
-                       is_daytime_all_player_messages)
+    # # 4.
+    # # TODO: remember I fix is_daytime here!
+    # analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
+    #                    is_daytime_all_player_messages)
 
-    # 5.
-    calc_players_metric(metrics_results_all_games)
+    # # 5.
+    # calc_players_metric(metrics_results_all_games)
 
     print("wait")
 
