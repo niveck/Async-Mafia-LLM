@@ -1171,6 +1171,7 @@ def add_human_winning_statistics(human_players, mafia_players, did_mafia_win,
 def check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_all_games: list[list[Phase]]):
     MAX_DAYTIME_NUM = 6
     num_messages_per_phase = {i + 1: [] for i in range(MAX_DAYTIME_NUM)}  # by phase index
+    num_players_per_phase = {i + 1: [] for i in range(MAX_DAYTIME_NUM)}  # by phase index
     for game in parsed_messages_by_phase_all_games:
         phase_counter = 0
         for phase in game:
@@ -1179,21 +1180,56 @@ def check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_al
             phase_counter += 1
             if phase_counter not in num_messages_per_phase:
                 continue
-            num_messages_per_phase[phase_counter].append(len(phase.messages))
+            player_messages = [msg for msg in phase.messages if not msg.is_manager]
+            # num_messages_per_phase[phase_counter].append(len(player_messages))
+            num_messages_per_phase[phase_counter].append(len(player_messages) / len(phase.active_players))  # TODO: remove this normalized version!
+            num_players_per_phase[phase_counter].append(len(phase.active_players))
     means, means_p_std, means_m_std = [], [], []
     for num_messages in num_messages_per_phase.values():
         mean, std = np.mean(num_messages), np.std(num_messages)
         means.append(mean)
         means_p_std.append(mean + std)
         means_m_std.append(mean - std)
+    # plt.title("Number of Messages Per Daytime Phase Throughout the Game")
+    plt.title("Number of Messages Per Player By Daytime Phase Throughout the Game")  # TODO: remove this normalized version!
     plt.fill_between(num_messages_per_phase.keys(), means_p_std, means_m_std, alpha=0.3,
                      label=r"mean $\pm$ STD", color="C0")
     plt.plot(num_messages_per_phase.keys(), means, label="mean", color="C0", marker="o")
+    # plt.bar(num_players_per_phase.keys(), [avg(v) for v in num_players_per_phase.values()],
+    #         label="average number of players per phase")
     plt.ylim(0, max(sum(num_messages_per_phase.values(), [])))
-    plt.xlabel("Daytime index in game")
-    plt.ylabel("Num messages in a daytime phase")
+    plt.xlabel("Daytime Phase Index in Game")
+    # plt.ylabel("Number of Messages Per Daytime Phase")
+    plt.ylabel("Number of Messages Per Daytime Phase")  # TODO: remove this normalized version!
     plt.legend()
     plt.show()
+    return
+    ### this is another option for a graph: average num messages by num of active players
+    num_messages_by_num_players = defaultdict(list)
+    for game in parsed_messages_by_phase_all_games:
+        for phase in game:
+            if not phase.is_daytime:
+                continue
+            player_messages = [msg for msg in phase.messages if not msg.is_manager]
+            num_messages_by_num_players[len(phase.active_players)].append(len(player_messages))
+    ordered_num_players = sorted(num_messages_by_num_players.keys())
+    means, means_p_std, means_m_std = [], [], []
+    for num_players in ordered_num_players:
+        mean = np.mean(num_messages_by_num_players[num_players])
+        std = np.std(num_messages_by_num_players[num_players])
+        means.append(mean)
+        means_p_std.append(mean + std)
+        means_m_std.append(mean - std)
+    plt.title("Number of Messages Per Daytime Phase By Number of Active Players")
+    plt.fill_between(ordered_num_players, means_p_std, means_m_std, alpha=0.3,
+                     label=r"mean $\pm$ STD", color="C0")
+    plt.plot(ordered_num_players, means, label="mean", color="C0", marker="o")
+    plt.ylim(0, max(sum(num_messages_by_num_players.values(), [])))
+    plt.xlabel("Number of Active Players")
+    plt.ylabel("Number of Messages Per Daytime Phase")
+    plt.legend()
+    plt.show()
+
 
 
 def main():
