@@ -14,7 +14,7 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
     VOTED_OUT_MESSAGE_FORMAT, VOTING_TIME_MESSAGE_FORMAT, DAYTIME_START_PREFIX, DAYTIME, \
     NIGHTTIME_START_PREFIX, NIGHTTIME, PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, \
     PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY, \
-    MAFIA_ROLE, BYSTANDER_ROLE
+    MAFIA_ROLE, BYSTANDER_ROLE, REAL_NAMES_FILE, REAL_NAME_CODENAME_DELIMITER
 from game_status_checks import is_voted_out, all_players_joined
 from llm_players.llm_constants import LLM_CONFIG_KEY
 
@@ -55,6 +55,8 @@ PLOT_3D_COLOR_MAP = {
     'LLM-mafia-daytime': 'red',
     'LLM-mafia-nighttime': 'darkred'
 }
+
+ANONYMIZED_NAME = "ANONYMIZED"
 
 
 def avg(scores): return sum(scores) / len(scores)
@@ -1172,7 +1174,7 @@ def add_human_winning_statistics(human_players, mafia_players, did_mafia_win,
 
 
 def check_variance_of_num_messages_through_time(parsed_messages_by_phase_all_games: list[list[Phase]]):
-    MAX_DAYTIME_NUM = 6  # 6  # TODO: try with 5 too
+    MAX_DAYTIME_NUM = 6
     num_seconds_window = 90
     num_messages_per_time_window = defaultdict(list)
     for game in parsed_messages_by_phase_all_games:
@@ -1351,41 +1353,60 @@ def main():
 
     # TODO: uncomment out important parts when finished
 
-    # # 0.
-    # calc_dataset_metadata(parsed_messages_by_phase_all_games)
+    # 0.
+    calc_dataset_metadata(parsed_messages_by_phase_all_games)
 
-    # # 1.
-    # plot_percentage_bars_chart(did_llm_win_all_games, is_llm_mafia_all_games,
-    #                            did_human_win_as_mafia_all_games,
-    #                            did_human_win_as_bystander_all_games)
+    # 1.
+    plot_percentage_bars_chart(did_llm_win_all_games, is_llm_mafia_all_games,
+                               did_human_win_as_mafia_all_games,
+                               did_human_win_as_bystander_all_games)
 
     # 2.1.
     calc_message_amount_by_player_during_daytime(parsed_messages_by_phase_all_games,
                                                  llm_names_all_games)
     check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_all_games)
 
-    # # 2.2.
-    # plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
-    #                               mean_per_game_of_timing_diff_of_messages_sent_by_llm,
-    #                               mean_per_game_of_timing_diff_of_self_messages_by_humans,
-    #                               mean_per_game_of_timing_diff_of_self_messages_by_llm)
+    # 2.2.
+    plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
+                                  mean_per_game_of_timing_diff_of_messages_sent_by_llm,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_humans,
+                                  mean_per_game_of_timing_diff_of_self_messages_by_llm)
 
-    # # 3.
-    # calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
+    # 3.
+    calc_message_content_empiric_metrics(human_content_metrics, llm_content_metrics)
 
-    # # 4.
-    # # TODO: remember I fix is_daytime here!
-    # analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
-    #                    is_daytime_all_player_messages)
+    # 4.
+    # TODO: remember I fix is_daytime here!
+    analyze_embeddings(all_player_messages, is_mafia_all_player_messages,
+                       is_daytime_all_player_messages)
 
-    # # 5.
-    # calc_players_metric(metrics_results_all_games)
+    # 5.
+    calc_players_metric(metrics_results_all_games)
 
-    print("wait")
+    print()  # Allowing breaking point before end
+
+
+def preprocess_games_for_dataset():
+    for game_dir in Path(DIRS_PREFIX).glob("*"):
+        # anonymize config
+        with open(game_dir / GAME_CONFIG_FILE, "r") as f:
+            config = json.load(f)
+        for player in config[PLAYERS_KEY_IN_CONFIG]:
+            player["real_name"] = ANONYMIZED_NAME
+        with open(game_dir / GAME_CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=4)
+        # anonymize real names mapping file
+        real_names = (game_dir / REAL_NAMES_FILE).read_text()
+        anonymized = re.sub(rf"([\w ]+)({REAL_NAME_CODENAME_DELIMITER}.+)",
+                            rf"{ANONYMIZED_NAME}\2", real_names)
+        (game_dir / REAL_NAMES_FILE).write_text(anonymized)
+    print()  # Allowing breaking point before end
+
 
 
 if __name__ == "__main__":
     print("CODE STARTED RUNNING (envs finished loading)")
+    # preprocess_games_for_dataset()
     # preliminary_analysis_by_game()
     # get_games_statistics()
     # get_message_timings_statistics()

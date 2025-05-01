@@ -4,7 +4,7 @@
             "name": "Ari",
             "is_mafia": true,
             "is_llm": true,
-            "real_name": "LLM0",
+            "real_name": "ANONYMIZED",
             "llm_config": {
                 "model_name": "meta-llama/Llama-3.1-8B-Instruct",
                 "use_pipeline": false,
@@ -25,42 +25,42 @@
             "name": "Kai",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Shir",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Quinn",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Meitar",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Winter",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Shaked",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Morgan",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Yoav",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "River",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Aviad",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Parker",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "GuyK",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         }
     ],

@@ -4,14 +4,14 @@
             "name": "Sutton",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Roy",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Peyton",
             "is_mafia": false,
             "is_llm": true,
-            "real_name": "LLM0",
+            "real_name": "ANONYMIZED",
             "llm_config": {
                 "model_name": "meta-llama/Llama-3.1-8B-Instruct",
                 "use_pipeline": false,
@@ -32,70 +32,70 @@
             "name": "Drew",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Almog",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Logan",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Barr",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Ronny",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Aviad",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Sage",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Shaked",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Kai",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Meitar",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Adrian",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Shir",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Mickey",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Yoav",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Finley",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Dan",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Casey",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Guy",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Ari",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Itai",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         }
     ],

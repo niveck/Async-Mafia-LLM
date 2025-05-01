@@ -1,7 +1,7 @@
-Uri: Ariel
-Asaf: Riley
-Noam: Adrian
-Omer: Jordan
-Eliya: Lee
-Esther: Lennon
-Timna: Jamie
+ANONYMIZED: Ariel
+ANONYMIZED: Riley
+ANONYMIZED: Adrian
+ANONYMIZED: Jordan
+ANONYMIZED: Lee
+ANONYMIZED: Lennon
+ANONYMIZED: Jamie

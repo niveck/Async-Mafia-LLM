@@ -1,4 +1,0 @@
-[11:00:40] Game-Manager: Now it's Nighttime for 1 minutes, only mafia can communicate and see messages and votes.
-[11:01:40] Game-Manager: Bill was voted out. Their role was bystander
-[11:01:40] Game-Manager: Now it's Daytime for 3 minutes, everyone can communicate and see messages and votes.
-[11:04:40] Game-Manager: Alex was voted out. Their role was bystander

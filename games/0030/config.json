@@ -4,56 +4,56 @@
             "name": "Ariel",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Uri",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Riley",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Asaf",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Adrian",
             "is_mafia": true,
             "is_llm": false,
-            "real_name": "Noam",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Jordan",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Omer",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Lee",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Eliya",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Lennon",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Esther",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Jamie",
             "is_mafia": false,
             "is_llm": false,
-            "real_name": "Timna",
+            "real_name": "ANONYMIZED",
             "llm_config": {}
         },
         {
             "name": "Morgan",
             "is_mafia": false,
             "is_llm": true,
-            "real_name": "LLM0",
+            "real_name": "ANONYMIZED",
             "llm_config": {
                 "model_name": "meta-llama/Llama-3.1-8B-Instruct",
                 "use_pipeline": false,
