@@ -943,7 +943,6 @@ def get_embeddings(messages: list[ParsedMessage], model_name=SENTENCE_EMBEDDING_
 
 def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
                                did_human_win_as_mafia, did_human_win_as_bystander):
-    # Percentage plots of winning percentage, winning as Mafia, winning as bystander, playing as mafia, mafia is winning
     did_llm_win_as_mafia = []
     did_llm_win_as_bystander = []
     for i, llm_win in enumerate(did_llm_win):
@@ -954,12 +953,12 @@ def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
     # default_true_color, default_false_color = "royalblue", "lightblue"  # "darkblue", "slateblue"  # "darkred", "indianred"
     human_true_color, human_false_color = "mediumblue", "cornflowerblue"
     llm_true_color, llm_false_color = "darkred", "indianred"
-    plt.figure(figsize=(8, 4))
+    plt.figure(figsize=(7, 2.5))
     ax = plt.subplot(1, 1, 1)  # used to merge X-axis
     ax.yaxis.tick_right()
     for false_label, false_color in [
-        ("Human Loses", human_false_color),
-        ("LLM Loses", llm_false_color),
+        # ("Human Loses", human_false_color),
+        # ("LLM Loses", llm_false_color),
         ("Human Loses as Bystander", human_false_color),
         ("LLM Loses as Bystander", llm_false_color),
         ("Human Loses as Mafia", human_false_color),
@@ -968,8 +967,8 @@ def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
         plt.barh(false_label, 1, color=false_color)
     plt.subplot(1, 1, 1, sharex=ax, frameon=False)
     for true_label, values, true_color in [
-        ("Human Wins", did_human_win_as_mafia + did_human_win_as_bystander, human_true_color),
-        ("LLM Wins", did_llm_win, llm_true_color),
+        # ("Human Wins", did_human_win_as_mafia + did_human_win_as_bystander, human_true_color),
+        # ("LLM Wins", did_llm_win, llm_true_color),
         ("Human Wins as Bystander", did_human_win_as_bystander, human_true_color),
         ("LLM Wins as Bystander", did_llm_win_as_bystander, llm_true_color),
         ("Human Wins as Mafia", did_human_win_as_mafia, human_true_color),
@@ -980,9 +979,8 @@ def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
         plt.text(true_percent, true_label, f"{true_percent * 100:.2f}% ", va="center", ha="right", c="white")
         plt.text(true_percent, true_label, f" {(1 - true_percent) * 100:.2f}%", va="center", ha="left")
     plt.xlim(0, 1)
-    plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1],
-               ["0%", "20%", "40%", "60%", "80%", "100%"])
-    plt.xlabel("Percentage")
+    plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1], ["0%", "20%", "40%", "60%", "80%", "100%"])
+    plt.xlabel("Winning Percentage")
     plt.tight_layout()
     plt.savefig(ANALYSIS_DIR / "llm_performance_in_game.png")
     plt.show()
