@@ -953,26 +953,26 @@ def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
     # default_true_color, default_false_color = "royalblue", "lightblue"  # "darkblue", "slateblue"  # "darkred", "indianred"
     human_true_color, human_false_color = "mediumblue", "cornflowerblue"
     llm_true_color, llm_false_color = "darkred", "indianred"
-    plt.figure(figsize=(7, 2.5))
+    plt.figure(figsize=(5, 2.5))
     ax = plt.subplot(1, 1, 1)  # used to merge X-axis
     ax.yaxis.tick_right()
     for false_label, false_color in [
         # ("Human Loses", human_false_color),
         # ("LLM Loses", llm_false_color),
-        ("Human Loses as Bystander", human_false_color),
-        ("LLM Loses as Bystander", llm_false_color),
-        ("Human Loses as Mafia", human_false_color),
-        ("LLM Loses as Mafia", llm_false_color)
+        ("Human Loses\nas Bystander", human_false_color),
+        ("LLM Loses\nas Bystander", llm_false_color),
+        ("Human Loses\nas Mafia", human_false_color),
+        ("LLM Loses\nas Mafia", llm_false_color)
     ][::-1]:
         plt.barh(false_label, 1, color=false_color)
     plt.subplot(1, 1, 1, sharex=ax, frameon=False)
     for true_label, values, true_color in [
         # ("Human Wins", did_human_win_as_mafia + did_human_win_as_bystander, human_true_color),
         # ("LLM Wins", did_llm_win, llm_true_color),
-        ("Human Wins as Bystander", did_human_win_as_bystander, human_true_color),
-        ("LLM Wins as Bystander", did_llm_win_as_bystander, llm_true_color),
-        ("Human Wins as Mafia", did_human_win_as_mafia, human_true_color),
-        ("LLM Wins as Mafia", did_llm_win_as_mafia, llm_true_color),
+        ("Human Wins\nas Bystander", did_human_win_as_bystander, human_true_color),
+        ("LLM Wins\nas Bystander", did_llm_win_as_bystander, llm_true_color),
+        ("Human Wins\nas Mafia", did_human_win_as_mafia, human_true_color),
+        ("LLM Wins\nas Mafia", did_llm_win_as_mafia, llm_true_color),
     ][::-1]:
         true_percent = avg(values)
         plt.barh(true_label, true_percent, color=true_color)
