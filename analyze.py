@@ -617,7 +617,8 @@ def get_games_statistics():
           f"Average: {avg(multiple_games_stats)}\n"
           f"STD: {np.std(multiple_games_stats)}\n"
           f"Min: {min(multiple_games_stats)}\n"
-          f"Max: {max(multiple_games_stats)}\n")
+          f"Max: {max(multiple_games_stats)}\n"
+          f"Total number of players: {len(multiple_games_stats)}")
 
 
 def calculate_timing_diffs(phase: Phase, this_game_human_player_messages_timing_diffs,
@@ -813,13 +814,13 @@ def plot_timing_histogram(messages, title):
 
 
 def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
-                                xlabel, plot_name, ax, kde_bandwidth: float = 1):
+                                xlabel, plot_name, ax, kde_bandwidth: float = 1, extend_xlim=False):
     # plt.title(title)
     # plt.xlabel(xlabel)
     # plt.ylabel("Proportion (density)")
-    ax.set_title(title)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("Proportion (density)")
+    ax.set_title(title, fontsize=15)
+    ax.set_xlabel(xlabel, fontsize=14)
+    ax.set_ylabel("Proportion (density)", fontsize=14)
     max_x = max(human_timing_diffs + llm_timing_diffs)
     for player_type, timing_diffs, color in [("Human", human_timing_diffs, "blue"),
                                              ("LLM", llm_timing_diffs, "red")]:
@@ -834,11 +835,13 @@ def plot_timing_diffs_histogram(human_timing_diffs, llm_timing_diffs, title,
         # plt.fill_between(
         ax.fill_between(
             x_range, np.exp(log_density), 0, alpha=0.5, color=color,
-            label=fr"{player_type} $(\mu = {np.mean(timing_diffs):.2f}, "
+            label=fr"{player_type}{'\n'}$(\mu = {np.mean(timing_diffs):.2f}, "
                   fr"\sigma = {np.std(timing_diffs):.2f})$")
     # plt.ylim(0, np.exp(max(log_density)) * 1.1)
     ax.set_ylim(0, np.exp(max(log_density)) * 1.1)
-    ax.legend()
+    if extend_xlim:
+        ax.set_xlim(ax.get_xlim()[0], ax.get_xlim()[1] * 1.1)
+    ax.legend(fontsize=14)
     # plt.savefig(ANALYSIS_DIR / f"{plot_name}.png")
     # plt.show()
 
@@ -980,7 +983,7 @@ def plot_percentage_bars_chart(did_llm_win, is_llm_mafia,
         plt.text(true_percent, true_label, f" {(1 - true_percent) * 100:.2f}%", va="center", ha="left")
     plt.xlim(0, 1)
     plt.xticks([0, 0.2, 0.4, 0.6, 0.8, 1], ["0%", "20%", "40%", "60%", "80%", "100%"])
-    plt.xlabel("Winning Percentage")
+    plt.xlabel("Winning Percentage", fontsize=12)
     plt.tight_layout()
     plt.savefig(ANALYSIS_DIR / "llm_performance_in_game.png")
     plt.show()
@@ -1047,21 +1050,22 @@ def plot_merged_timing_diff_hists(mean_per_game_of_timing_diff_of_messages_sent_
                                   mean_per_game_of_timing_diff_of_messages_sent_by_llm,
                                   mean_per_game_of_timing_diff_of_self_messages_by_humans,
                                   mean_per_game_of_timing_diff_of_self_messages_by_llm):
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(11, 4.7))
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(11, 5))
     plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_messages_sent_by_humans,
                                 mean_per_game_of_timing_diff_of_messages_sent_by_llm,
                                 "Distribution of Average Time Between a Player's Message\n"
                                 "and the Previous Message by Any Other Player",
-                                "Player's Average Waiting Time From Previous Message (seconds)",
+                                "Player's Average Waiting Time\nFrom Previous Message (seconds)",
                                 "mean_time_diff_msg_to_any_prev",
                                 axs[0], kde_bandwidth=1.5)  # TODO: change when there is more data
     plot_timing_diffs_histogram(mean_per_game_of_timing_diff_of_self_messages_by_humans,
                                 mean_per_game_of_timing_diff_of_self_messages_by_llm,
-                                "Distribution of Average Time Difference Between\n"
-                                "Messages of the Same Player",
-                                "Player's Average Waiting Time Between Self Messages (seconds)",
+                                "Distribution of Average Time Difference\n"
+                                "Between Messages of the Same Player",
+                                "Player's Average Waiting Time\nBetween Self Messages (seconds)",
                                 "mean_time_diff_same_player_msg",
-                                axs[1], kde_bandwidth=5)  # TODO: change when there is more data
+                                axs[1], kde_bandwidth=5,  # TODO: change when there is more data
+                                extend_xlim=True)
     fig.tight_layout()
     plt.savefig(ANALYSIS_DIR / "mean_time_diff_hists.png")
     plt.show()
@@ -1238,17 +1242,55 @@ def check_variance_of_num_messages_throughout_phases(parsed_messages_by_phase_al
         means.append(mean)
         means_p_std.append(mean + std)
         means_m_std.append(mean - std)
-    plt.title("Number of Messages Per Player By Daytime Phase Throughout the Game")
+    # plt.title("Number of Messages Per Player By\nDaytime Phase Throughout the Game", fontsize=17)
     plt.fill_between(num_messages_per_phase.keys(), means_p_std, means_m_std, alpha=0.3,
                      label=r"mean $\pm$ STD", color="C0")
     plt.plot(num_messages_per_phase.keys(), means, label="mean", color="C0")
     plt.ylim(0, max(sum(num_messages_per_phase.values(), [])))
-    plt.xlabel("Daytime Phases Since Beginning of Game")
-    plt.ylabel("Number of Messages Per Player")
-    plt.legend()
+    plt.xlabel("Daytime Phases Since Beginning of Game", fontsize=16)
+    plt.ylabel("Number of Messages Per Player", fontsize=16)
+    plt.legend(fontsize=14)
+    plt.tight_layout()
     plt.savefig(ANALYSIS_DIR / "num_msg_per_player_by_daytime_phase.png")
     plt.show()
 
+
+def plot_voting_out_by_speaking_rank_histogram(parsed_messages_by_phase_all_games: list[list[Phase]]):
+    voted_out_ranks = []
+    for game in parsed_messages_by_phase_all_games:
+        for phase in game:
+            if not phase.is_daytime:
+                continue
+            # message_count_by_player = defaultdict(int)
+            message_count_by_player = {player: 0 for player in phase.active_players}
+            for message in phase.messages:
+                if message.is_manager:
+                    continue
+                try:
+                    message_count_by_player[message.name] += 1
+                except KeyError:  # bug caused message to be sent on the next phase
+                    pass
+            sorted_counter = sorted((count, name) for name, count in message_count_by_player.items())
+            for i, (count, name) in enumerate(sorted_counter):
+                if name == phase.voted_out_player:
+                    voted_out_ranks.append(i / (len(phase.active_players) - 1))  # normalized
+    plt.hist(voted_out_ranks, bins=15, alpha=0.7)
+    # plt.title("Histogram of Voted Out Players\nby Speaking Rank", fontsize=17)
+    plt.xlabel("Normalized Player Rank by Number of Messages", fontsize=15)
+    plt.ylabel("Number of Times the Player Was Voted Out    ", fontsize=15)
+    # KDE_BANDWIDTH = 0.03
+    # voted_out_ranks_squeezed = np.array(voted_out_ranks)[:, np.newaxis]
+    # kde_voted_out_ranks = KernelDensity(
+    #     kernel="gaussian", bandwidth=KDE_BANDWIDTH).fit(voted_out_ranks_squeezed)
+    # x_range = np.linspace(-0.1, 1.1, 1000)
+    # log_density = kde_voted_out_ranks.score_samples(x_range[:, np.newaxis])
+    # plt.fill_between(x_range, np.exp(log_density), 0, alpha=0.5)
+    # # plt.ylim(0, np.exp(max(log_density)) * 1.1)
+    # # if extend_xlim:
+    # #     ax.set_xlim(ax.get_xlim()[0], ax.get_xlim()[1] * 1.1)
+    plt.tight_layout()
+    plt.savefig(ANALYSIS_DIR / "speaking_rank_voted_out_hist.png")
+    plt.show()
 
 
 def main():
@@ -1274,6 +1316,8 @@ def main():
     # 5. Participant’s Feedback
     # 5.1 overall average (for all players in all games together) of identification (no need for STD)
     # 5.2 Table: means and STDs (overall, like above) for the 3 human-ranked scores
+    # 6. Speaking Rank - Voting Out Distribution
+    # 6.1. Plot: histogram of voted out player by their normalized speaking rank in that phase
 
 
     did_mafia_win_all_games = []
@@ -1380,6 +1424,10 @@ def main():
 
     # 5.
     calc_players_metric(metrics_results_all_games)
+
+    # 6.
+    plot_voting_out_by_speaking_rank_histogram(parsed_messages_by_phase_all_games)
+
 
     print()  # Allowing breaking point before end
 
