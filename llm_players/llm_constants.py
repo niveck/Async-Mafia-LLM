@@ -113,7 +113,7 @@ def turn_task_into_prompt(task, message_history):
     if not message_history:
         prompt += "No player has sent a message yet.\n"
     else:
-        prompt = "Here is the message history so far, including [timestamps]:\n"
+        prompt += "Here is the message history so far, including [timestamps]:\n"
         prompt += "".join(message_history)  # each one already ends with "\n"
     prompt += task.strip() + "\n"
     # not necessarily needed with all models, seemed relevant to Llama3.1:
