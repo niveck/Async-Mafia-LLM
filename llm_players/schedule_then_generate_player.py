@@ -2,18 +2,9 @@ import re
 from game_constants import REMAINING_PLAYERS_FILE, GAME_MANAGER_NAME, MESSAGE_PARSING_PATTERN
 from game_status_checks import is_nighttime
 from llm_players.llm_constants import turn_task_into_prompt, SCHEDULE_THEN_GENERATE_TYPE, \
-    make_more_human_like, SCHEDULING_GENERATION_PARAMETERS
+    make_more_human_like, SCHEDULING_GENERATION_PARAMETERS, TALKATIVE_PROMPT, QUIETER_PROMPT
 from llm_players.llm_player import LLMPlayer
 from llm_players.llm_wrapper import LLMWrapper
-
-TALKATIVE_VERSION = "Make sure to say something every once in a while, and make yourself heard. " \
-                    "Remember you like to be active in the game, so participate and be " \
-                    "as talkative as other players! "  # TODO better const name + move to consts file!
-QUIETER_VERSION = "Don't overflow the discussion with your messages! " \
-                  "Pay attention to the amount of messages with your name compared to the amount " \
-                  "of messages with names of other players and let them have their turn too! " \
-                  "Check the speaker name in the last few messages, and decide accordingly " \
-                  "based on whether you talked too much. "  # TODO better const name + move to consts file!
 
 
 def no_one_has_talked_yet_in_current_phase(message_history):
@@ -60,7 +51,7 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
 
     def talkative_scheduling_prompt_modifier(self, message_history):
         if not message_history or is_nighttime(self.game_dir):
-            return TALKATIVE_VERSION
+            return TALKATIVE_PROMPT
         all_players = (self.game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
         players_counts = {player: 0 for player in all_players}
         for message in message_history[::-1]:
@@ -73,9 +64,9 @@ class ScheduleThenGeneratePlayer(LLMPlayer):
                     players_counts[player] += 1
         all_player_messages = sum(players_counts.values())
         if not all_player_messages or players_counts[self.name] / all_player_messages < 1 / len(all_players):
-            return TALKATIVE_VERSION
+            return TALKATIVE_PROMPT
         else:
-            return QUIETER_VERSION
+            return QUIETER_PROMPT
 
     def create_scheduling_prompt(self, message_history):
         # removed these because of too many talks:

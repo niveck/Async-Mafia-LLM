@@ -108,6 +108,17 @@ SCHEDULING_GENERATION_PARAMETERS = {
 }
 
 
+# prompts
+TALKATIVE_PROMPT = "Make sure to say something every once in a while, and make yourself heard. " \
+                   "Remember you like to be active in the game, so participate and be " \
+                   "as talkative as other players! "
+QUIETER_PROMPT = "Don't overflow the discussion with your messages! " \
+                 "Pay attention to the amount of messages with your name compared to the amount " \
+                 "of messages with names of other players and let them have their turn too! " \
+                 "Check the speaker name in the last few messages, and decide accordingly " \
+                 "based on whether you talked too much. "
+
+
 def turn_task_into_prompt(task, message_history):
     prompt = f"The current time is [{get_current_timestamp()}].\n"
     if not message_history:
