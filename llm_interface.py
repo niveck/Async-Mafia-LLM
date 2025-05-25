@@ -1,4 +1,5 @@
 import json
+import random
 from game_constants import *  # incl. argparse, time, Path (from pathlib), colored (from termcolor)
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined
@@ -51,9 +52,9 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
         num_words = len(message.split())
-        # time.sleep(num_words // player.num_words_per_second_to_wait)
-        time.sleep(num_words // player.num_words_per_second_to_wait + 2)
+        time.sleep(num_words // player.num_words_per_second_to_wait)
         # TODO: leave only working part
+        # time.sleep(num_words // player.num_words_per_second_to_wait + 2)
         # # It was originally num words per second, but now I changed it to be treated as num chars per second
         # # treated as num chars per second to wait:
         # time.sleep(len(message) // player.num_words_per_second_to_wait)
@@ -70,14 +71,21 @@ def get_vote_from_llm(player, message_history):
     voting_message = player.get_vote(message_history, candidate_vote_names)
     for name in candidate_vote_names:
         if name in voting_message:  # update game manger
-            time.sleep(VOTING_WAITING_TIME)
-            with open(game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name), "a") as f:
-                f.write(name + "\n")
-            print(colored(LLM_VOTE_MESSAGE_FORMAT.format(name), OPERATOR_COLOR))
+            update_vote(name, player)
             return
     # if didn't return: no name was in voting_message
     player.logger.log(MODEL_VOTED_INVALIDLY_LOG, voting_message)
     print(colored(MODEL_VOTED_INVALIDLY_LOG + ": " + voting_message, OPERATOR_COLOR))
+    vote = random.choice(candidate_vote_names)
+    player.logger.log(MODEL_RANDOMLY_VOTED_LOG, vote)
+    update_vote(vote, player)
+
+
+def update_vote(voted_name, player):
+    time.sleep(VOTING_WAITING_TIME)
+    with open(game_dir / PERSONAL_VOTE_FILE_FORMAT.format(player.name), "a") as f:
+        f.write(voted_name + "\n")
+    print(colored(LLM_VOTE_MESSAGE_FORMAT.format(voted_name), OPERATOR_COLOR))
 
 
 def add_message_to_game(player, message_history):

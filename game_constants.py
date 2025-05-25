@@ -168,6 +168,7 @@ MODEL_CHOSE_TO_USE_TURN_LOG = "The LLM player has chosen to use its turn and gen
 MODEL_CHOSE_TO_PASS_TURN_LOG = "The LLM player has chosen to pass its turn " \
                                "without generating a message!"
 MODEL_VOTED_INVALIDLY_LOG = "The LLM player has generated a message with no valid vote..."
+MODEL_RANDOMLY_VOTED_LOG = "random vote selected for the LLM player"
 
 
 def minutes_to_seconds(num_minutes):
