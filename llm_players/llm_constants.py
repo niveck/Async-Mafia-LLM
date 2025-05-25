@@ -1,4 +1,4 @@
-from game_constants import get_current_timestamp, RULES_OF_THE_GAME
+from game_constants import get_current_timestamp, RULES_OF_THE_GAME, strip_special_chars
 
 MODEL_NAMES = [
     "meta-llama/Llama-3.1-8B-Instruct",
@@ -126,4 +126,4 @@ def make_more_human_like(message):
         # remove the formal style of ending sentences with ".", with no effect over multiple dots
         message = message[:-1]
     # return message.capitalize()  # Leaves only the first character in caps (which is still common)
-    return message.lower()
+    return strip_special_chars(message).lower()

@@ -5,7 +5,6 @@ from pathlib import Path
 from collections import defaultdict
 from matplotlib import pyplot as plt
 from sklearn.neighbors import KernelDensity
-from sympy.printing.theanocode import global_cache
 
 from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, METRICS_TO_SCORE, \
     MESSAGE_PARSING_PATTERN, GAME_MANAGER_NAME, LLM_IDENTIFICATION, PERSONAL_SURVEY_FILE_FORMAT, \
@@ -14,7 +13,7 @@ from game_constants import DIRS_PREFIX, PLAYER_NAMES_FILE, LLM_LOG_FILE_FORMAT, 
     VOTED_OUT_MESSAGE_FORMAT, VOTING_TIME_MESSAGE_FORMAT, DAYTIME_START_PREFIX, DAYTIME, \
     NIGHTTIME_START_PREFIX, NIGHTTIME, PUBLIC_MANAGER_CHAT_FILE, PUBLIC_DAYTIME_CHAT_FILE, \
     PUBLIC_NIGHTTIME_CHAT_FILE, MAFIA_NAMES_FILE, DAYTIME_MINUTES_KEY, NIGHTTIME_MINUTES_KEY, \
-    MAFIA_ROLE, BYSTANDER_ROLE, REAL_NAMES_FILE, REAL_NAME_CODENAME_DELIMITER
+    MAFIA_ROLE, BYSTANDER_ROLE, REAL_NAMES_FILE, REAL_NAME_CODENAME_DELIMITER, strip_special_chars
 from game_status_checks import is_voted_out, all_players_joined
 from llm_players.llm_constants import LLM_CONFIG_KEY
 
@@ -1087,10 +1086,6 @@ def calc_content_metrics_from_messages(content_metrics, messages):
     content_metrics[LENGTH].append(np.mean(lengths))
     content_metrics[REPETITION].append(len(messages) - len(set(messages)))
     content_metrics[NUM_UNIQUE_WORDS].append(calc_num_unique_words(messages))
-
-
-def strip_special_chars(content):
-    return re.search(r"^[^a-zA-Z0-9]*(.*?)[^a-zA-Z0-9]*$", content).group(1)
 
 
 def calc_mean_message_content_empiric_metrics(parsed_messages_by_phase, human_players,

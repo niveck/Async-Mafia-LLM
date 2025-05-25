@@ -1,3 +1,4 @@
+import re
 import argparse
 import random
 import time
@@ -180,6 +181,10 @@ def get_current_timestamp():
 def format_message(name, message):
     timestamp = get_current_timestamp()
     return MESSAGE_FORMAT.format(timestamp=timestamp, name=name, message=message) + "\n"
+
+
+def strip_special_chars(content):
+    return re.search(r"^[^a-zA-Z0-9]*(.*?)[^a-zA-Z0-9]*$", content).group(1)
 
 
 def get_role_string(is_mafia):
