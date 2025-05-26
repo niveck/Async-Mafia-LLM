@@ -76,7 +76,7 @@ DEFAULT_NO_REPEAT_NGRAM = 8
 
 DEFAULT_NUM_WORDS_PER_SECOND_TO_WAIT = 1  # simulates number of words written normally per second
 
-VOTING_WAITING_TIME = 1  # 5  # seconds
+VOTING_WAITING_TIME = 0  # 5  # seconds
 
 DEFAULT_LLM_CONFIG = {
     MODEL_NAME_KEY: DEFAULT_MODEL_NAME,
