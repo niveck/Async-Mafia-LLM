@@ -52,8 +52,9 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
         num_words = len(message.split())
-        time.sleep(num_words // player.num_words_per_second_to_wait)
+        time.sleep(max(num_words // player.num_words_per_second_to_wait - 4, 0))
         # TODO: leave only working part
+        # time.sleep(num_words // player.num_words_per_second_to_wait)
         # time.sleep(num_words // player.num_words_per_second_to_wait + 2)
         # # It was originally num words per second, but now I changed it to be treated as num chars per second
         # # treated as num chars per second to wait:
