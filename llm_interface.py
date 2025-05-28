@@ -4,7 +4,7 @@ from game_constants import *  # incl. argparse, time, Path (from pathlib), color
 from game_status_checks import is_nighttime, is_game_over, is_voted_out, is_time_to_vote, \
     all_players_joined
 from llm_players.factory import llm_player_factory
-from llm_players.llm_constants import GAME_DIR_KEY, VOTING_WAITING_TIME
+from llm_players.llm_constants import GAME_DIR_KEY, VOTING_WAITING_TIME, MAX_TIME_TO_WAIT
 
 
 OPERATOR_COLOR = "yellow"  # the person running this file is the "operator" of the model
@@ -52,7 +52,7 @@ def read_messages_from_file(message_history, file_name, num_read_lines):
 def wait_writing_time(player, message):
     if player.num_words_per_second_to_wait > 0:
         num_words = len(message.split())
-        time.sleep(max(num_words // player.num_words_per_second_to_wait - 5, 0))
+        time.sleep(min(num_words // player.num_words_per_second_to_wait, MAX_TIME_TO_WAIT))
         # TODO: leave only working part
         # time.sleep(num_words // player.num_words_per_second_to_wait)
         # time.sleep(num_words // player.num_words_per_second_to_wait + 2)

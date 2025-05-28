@@ -160,7 +160,7 @@ class LLMWrapper:
             if self.use_together:
                 messages = self.pipeline_preprocessing(input_text, system_info)
                 self.logger.log("messages in generate with self.use_together", messages)
-                final_output = self.generate_with_together_safely(messages, generation_parameters)
+                final_output = self.generate_with_together_safely(messages, generation_parameters)  # max_new_tokens -> max_tokens
                 self.logger.log("final_output in generate with self.use_together", final_output)
             elif self.use_pipeline:
                 messages = self.pipeline_preprocessing(input_text, system_info)
