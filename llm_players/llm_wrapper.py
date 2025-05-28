@@ -1,10 +1,14 @@
 import os
+import time
 from functools import cache
+from pathlib import Path
+
 from game_constants import get_current_timestamp
 from llm_players.llm_constants import TASK2OUTPUT_FORMAT, INITIAL_GENERATION_PROMPT, \
     INSTRUCTION_INPUT_RESPONSE_PATTERN, LLAMA3_PATTERN, DEFAULT_PROMPT_PATTERN, NUM_BEAMS_KEY, \
     MODEL_NAME_KEY, USE_PIPELINE_KEY, PIPELINE_TASK_KEY, MAX_NEW_TOKENS_KEY, GENERAL_SYSTEM_INFO, \
-    REPETITION_PENALTY_KEY, GENERATION_PARAMETERS
+    REPETITION_PENALTY_KEY, GENERATION_PARAMETERS, USE_TOGETHER_KEY, TOGETHER_API_KEY_KEYWORD, \
+    SECRETS_DICT_FILE_PATH, SLEEPING_TIME_FOR_API_GENERATION_ERROR
 
 print("Trying to import torch...", get_current_timestamp())
 import torch
@@ -13,6 +17,9 @@ print("Trying to import from transformers...", get_current_timestamp())
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoConfig, \
     pipeline
 print("Finished importing from transformers!", get_current_timestamp())
+
+from together import Together
+from together.error import TogetherException
 
 CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
 
@@ -39,22 +46,45 @@ def cached_pipeline(model_name, task):  # TODO: maybe use device as parameter?
     return pipeline(task, model_name, device_map="auto")
 
 
+def get_together_api_key():
+    key = os.environ.get(TOGETHER_API_KEY_KEYWORD)
+    if key:
+        return key
+    secrets_file = Path(SECRETS_DICT_FILE_PATH)
+    if secrets_file.exists():
+        try:
+            secrets = eval(secrets_file.read_text())
+        except (ValueError, NameError):
+            return None
+        return secrets.get(TOGETHER_API_KEY_KEYWORD)
+    else:  # TODO: REMOVE AFTER ADDING THE FILE!
+        print("\n\n\nMISSING SECRETS DICT FILE!!!!!\n\n\n")
+    return None
+
+
 class LLMWrapper:
 
     def __init__(self, logger, **llm_config):
         self.logger = logger
         self.model_name = llm_config[MODEL_NAME_KEY]
+        self.use_together = llm_config.get(USE_TOGETHER_KEY)
         self.use_pipeline = llm_config[USE_PIPELINE_KEY]
         self.pipeline_task = llm_config[PIPELINE_TASK_KEY]
         self.generation_parameters = {key: value for key, value in llm_config.items()
                                       if key in GENERATION_PARAMETERS}
+        if (NUM_BEAMS_KEY in self.generation_parameters
+            and self.generation_parameters[NUM_BEAMS_KEY] < 2):
+            del self.generation_parameters[NUM_BEAMS_KEY]
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.prompt_template = self._get_prompt_template()
-        if self.use_pipeline:
+        if self.use_together:
+            self.client = Together(api_key=get_together_api_key())
+            self.pipeline = self.tokenizer = self.model = None
+        elif self.use_pipeline:
             self.pipeline = cached_pipeline(self.model_name, self.pipeline_task)
-            self.tokenizer = self.model = None
+            self.client = self.tokenizer = self.model = None
         else:
-            self.pipeline = None
+            self.pipeline = self.client = None
             self.tokenizer = cached_tokenizer(self.model_name)
             self.model = cached_model(self.model_name)
             self.model.to(self.device)
@@ -127,7 +157,12 @@ class LLMWrapper:
         if generation_parameters is None:
             generation_parameters = self.generation_parameters
         with torch.inference_mode():
-            if self.use_pipeline:
+            if self.use_together:
+                messages = self.pipeline_preprocessing(input_text, system_info)
+                self.logger.log("messages in generate with self.use_together", messages)
+                final_output = self.generate_with_together_safely(messages, generation_parameters)
+                self.logger.log("final_output in generate with self.use_together", final_output)
+            elif self.use_pipeline:
                 messages = self.pipeline_preprocessing(input_text, system_info)
                 self.logger.log("messages in generate with self.use_pipeline", messages)
                 outputs = self.pipeline(messages, **generation_parameters)
@@ -143,3 +178,18 @@ class LLMWrapper:
                 self.logger.log("decoded_output in generate directly", decoded_output)
                 final_output = self.direct_postprocessing(decoded_output)
         return final_output.replace("\n", "   ").strip()
+
+    def generate_with_together_safely(self, messages, generation_parameters):
+        output = None
+        while not output:
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    **generation_parameters
+                )
+                output = response.choices[0].message.content
+            except TogetherException as e:
+                self.logger.log("error generating with TogetherAI", str(e))
+                time.sleep(SLEEPING_TIME_FOR_API_GENERATION_ERROR)
+        return output

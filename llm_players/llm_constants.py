@@ -1,6 +1,7 @@
 from game_constants import get_current_timestamp, RULES_OF_THE_GAME, strip_special_chars
 
 MODEL_NAMES = [
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
     "meta-llama/Llama-3.1-8B-Instruct",
     "microsoft/Phi-3-mini-4k-instruct"
 ]
@@ -41,10 +42,16 @@ ASYNC_TYPES = [SCHEDULE_THEN_GENERATE_TYPE, GENERATE_THEN_SCHEDULE_TYPE,
                FINE_TUNED_TYPE, EVERY_X_MESSAGES_TYPE]
 DEFAULT_ASYNC_TYPE = ASYNC_TYPES[0]
 
+# API keys and secrets
+SECRETS_DICT_FILE_PATH = ".secrets_dict.txt"
+TOGETHER_API_KEY_KEYWORD = "TOGETHER_API_KEY"
+SLEEPING_TIME_FOR_API_GENERATION_ERROR = 3
+
 # config keys:
 LLM_CONFIG_KEY = "llm_config"  # should match the key in PlayerConfig dataclass
 GAME_DIR_KEY = "game_dir"  # should match key word in LLMPlayer
 MODEL_NAME_KEY = "model_name"
+USE_TOGETHER_KEY = "use_together"
 USE_PIPELINE_KEY = "use_pipeline"
 PIPELINE_TASK_KEY = "pipeline_task"
 WORDS_PER_SECOND_WAITING_KEY = "num_words_per_second_to_wait"
@@ -64,7 +71,7 @@ GENERATION_PARAMETERS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, REPETITION_PENALTY_K
 INT_CONFIG_KEYS = [MAX_NEW_TOKENS_KEY, NUM_BEAMS_KEY, WORDS_PER_SECOND_WAITING_KEY,
                    NO_REPEAT_NGRAM_KEY]
 FLOAT_CONFIG_KEYS = [REPETITION_PENALTY_KEY, TEMPERATURE_KEY]
-BOOL_CONFIG_KEYS = [USE_PIPELINE_KEY, DO_SAMPLE_KEY]
+BOOL_CONFIG_KEYS = [USE_TOGETHER_KEY, USE_PIPELINE_KEY, DO_SAMPLE_KEY]
 
 # default values
 DEFAULT_MAX_NEW_TOKENS = 25
@@ -80,6 +87,7 @@ VOTING_WAITING_TIME = 0  # 5  # seconds
 
 DEFAULT_LLM_CONFIG = {
     MODEL_NAME_KEY: DEFAULT_MODEL_NAME,
+    USE_TOGETHER_KEY: True,
     USE_PIPELINE_KEY: False,
     PIPELINE_TASK_KEY: TEXT_GENERATION_TASK,
     MAX_NEW_TOKENS_KEY: DEFAULT_MAX_NEW_TOKENS,
