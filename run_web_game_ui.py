@@ -1,5 +1,5 @@
 # run_web_game_ui.py
-from flask import Flask, request, redirect, render_template_string
+from flask import Flask, request, redirect, jsonify, render_template_string
 from game_constants import *
 from game_status_checks import *
 from player_survey import run_survey_about_llm_player
@@ -16,16 +16,30 @@ HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="refresh" content="2">
     <title>Mafia Game</title>
+    <script>
+    function loadChat() {
+        fetch("/chat")
+            .then(response => response.json())
+            .then(data => {
+                const chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML = "";
+                data.forEach(line => {
+                    const div = document.createElement("div");
+                    div.style.color = line.color;
+                    div.textContent = line.text;
+                    chatBox.appendChild(div);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+    }
+    setInterval(loadChat, 2000);
+    window.onload = loadChat;
+    </script>
 </head>
 <body style="font-family: monospace; white-space: pre-wrap;">
     <h2>Live Game Chat</h2>
-    <div style="border:1px solid #ccc; padding:10px; background-color:#f8f8f8;">
-        {% for line in chat_lines %}
-            <div style="color:{{ line.color }}">{{ line.text }}</div>
-        {% endfor %}
-    </div>
+    <div id="chat-box" style="border:1px solid #ccc; height:300px; overflow-y:scroll; padding:10px; background-color:#f8f8f8;"></div>
 
     {% if show_input %}
     <h3>Send a Message</h3>
@@ -57,6 +71,7 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
 
 def get_chat_lines():
     lines = []
@@ -91,6 +106,10 @@ def index():
                                   show_vote=show_vote,
                                   show_survey=show_survey,
                                   vote_options=vote_options)
+
+@app.route("/chat")
+def chat():
+    return jsonify(get_chat_lines())
 
 @app.route("/send", methods=["POST"])
 def send():
