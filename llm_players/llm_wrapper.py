@@ -184,7 +184,7 @@ class LLMWrapper:
         while not output:
             try:
                 response = self.client.chat.completions.create(
-                    model=self.model,
+                    model=self.model_name,
                     messages=messages,
                     **generation_parameters
                 )
