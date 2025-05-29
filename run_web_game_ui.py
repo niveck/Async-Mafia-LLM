@@ -18,24 +18,53 @@ HTML_TEMPLATE = """
 <head>
     <title>Mafia Game</title>
     <script>
-    function loadChat() {
-        fetch("/chat")
+    function updateState() {
+        fetch("/state")
             .then(response => response.json())
             .then(data => {
+                // Update chat
                 const chatBox = document.getElementById("chat-box");
                 chatBox.innerHTML = "";
-                data.forEach(line => {
+                data.chat_lines.forEach(line => {
                     const div = document.createElement("div");
                     div.style.color = line.color;
                     div.textContent = line.text;
                     chatBox.appendChild(div);
                 });
                 chatBox.scrollTop = chatBox.scrollHeight;
+    
+                // Update message input visibility
+                const msgForm = document.getElementById("message-form");
+                if (msgForm) msgForm.style.display = data.can_write ? "block" : "none";
+    
+                // Update voting visibility and options
+                const voteForm = document.getElementById("vote-form");
+                const voteSelect = document.getElementById("vote-select");
+                if (voteForm && voteSelect) {
+                    if (data.can_vote) {
+                        voteForm.style.display = "block";
+                        voteSelect.innerHTML = "";
+                        data.vote_options.forEach(opt => {
+                            const option = document.createElement("option");
+                            option.value = opt;
+                            option.textContent = opt;
+                            voteSelect.appendChild(option);
+                        });
+                    } else {
+                        voteForm.style.display = "none";
+                    }
+                }
+    
+                // Update survey form
+                const surveyForm = document.getElementById("survey-form");
+                if (surveyForm) surveyForm.style.display = data.show_survey ? "block" : "none";
             });
     }
-    setInterval(loadChat, 2000);
-    window.onload = loadChat;
+    
+    setInterval(updateState, 2000);
+    window.onload = updateState;
     </script>
+
 </head>
 <body style="font-family: monospace; white-space: pre-wrap;">
     <h2>Live Game Chat</h2>
@@ -43,7 +72,7 @@ HTML_TEMPLATE = """
 
     {% if show_input %}
     <h3>Send a Message</h3>
-    <form method="POST" action="/send">
+    <form method="POST" action="/send" id="message-form" style="display:none;">
         <input type="text" name="msg" style="width: 80%;" autofocus>
         <input type="submit" value="Send">
     </form>
@@ -51,19 +80,15 @@ HTML_TEMPLATE = """
 
     {% if show_vote %}
     <h3>Vote to Eliminate</h3>
-    <form method="POST" action="/vote">
-        <select name="vote_for">
-            {% for p in vote_options %}
-                <option value="{{ p }}">{{ p }}</option>
-            {% endfor %}
-        </select>
+    <form method="POST" action="/vote" id="vote-form" style="display:none;">
+        <select name="vote_for" id="vote-select"></select>
         <input type="submit" value="Vote">
     </form>
     {% endif %}
 
     {% if show_survey %}
     <h3>Survey</h3>
-    <form method="POST" action="/survey">
+    <form method="POST" action="/survey" id="survey-form" style="display:none;">
         <textarea name="feedback" rows="4" cols="60"></textarea><br>
         <input type="submit" value="Submit Survey">
     </form>
@@ -134,6 +159,27 @@ def survey():
     global voted_out
     voted_out = True
     return redirect("/")
+
+@app.route("/state")
+def state():
+    chat_lines = get_chat_lines()
+    can_write = not is_voted_out(name, game_dir) and (is_mafia or not is_nighttime(game_dir)) and not is_time_to_vote(game_dir)
+    can_vote = is_time_to_vote(game_dir) and not is_voted_out(name, game_dir)
+    show_survey = is_game_over(game_dir) and not voted_out
+    vote_options = []
+    if can_vote:
+        vote_options = (game_dir / REMAINING_PLAYERS_FILE).read_text().splitlines()
+        if name in vote_options:
+            vote_options.remove(name)
+
+    return jsonify({
+        "chat_lines": chat_lines,
+        "can_write": can_write,
+        "can_vote": can_vote,
+        "vote_options": vote_options,
+        "show_survey": show_survey
+    })
+
 
 def initialize():
     global game_dir, name, is_mafia
